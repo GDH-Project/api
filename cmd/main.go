@@ -1,0 +1,87 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"time"
+
+	"github.com/GDH-Proejct/api/cmd/config"
+	"github.com/GDH-Proejct/api/internal/resource"
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humagin"
+	"github.com/danielgtaylor/huma/v2/humacli"
+	ginzap "github.com/gin-contrib/zap"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+)
+
+type Options struct {
+	Debug bool `doc:"Enable debug logging" short:"d"`
+}
+
+func main() {
+	cli := humacli.New(func(hooks humacli.Hooks, opts *Options) {
+		log := config.InitLogger(opts.Debug)
+		version := config.GetVersion(log)
+		cfg := config.GetConfig(log)
+
+		if opts.Debug {
+			gin.SetMode(gin.DebugMode)
+		} else {
+			gin.SetMode(gin.ReleaseMode)
+		}
+
+		var r *gin.Engine
+
+		if opts.Debug {
+			r = gin.Default()
+		} else {
+			r = gin.New()
+			r.Use(ginzap.Ginzap(log, time.RFC3339, true))
+			r.Use(ginzap.RecoveryWithZap(log, true))
+		}
+
+		// huma config
+		humaConfig := huma.DefaultConfig("GDH-API 서버 입니다.", version)
+		humaConfig.CreateHooks = nil
+		humaConfig.SchemasPath = ""
+
+		_ = humagin.New(r, humaConfig)
+
+		// Dependency
+		_ = resource.InitDB(cfg.DbUrl, log)
+
+		server := http.Server{
+			Addr:    ":8080",
+			Handler: r,
+		}
+		// 서버 시작시
+		hooks.OnStart(func() {
+			log.Info("서버를 시작합니다 :8080")
+			if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				log.Fatal("서버를 초기화 하지 못했습니다.", zap.Error(err))
+			}
+		})
+		// 서버 종료시
+		hooks.OnStop(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			stopped := make(chan struct{})
+
+			go func() {
+				_ = server.Shutdown(ctx)
+				close(stopped)
+			}()
+
+			select {
+			case <-stopped:
+				log.Info("api서버가 정상적으로 종료되었습니다.")
+			case <-ctx.Done():
+				log.Warn("서버가 종료 제한시간에 도달하여 강제 종료 되었습니다.")
+			}
+		})
+	})
+	cli.Run()
+}
