@@ -5,10 +5,13 @@ go 1.25.1
 require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/danielgtaylor/huma/v2 v2.34.1
+	github.com/gin-contrib/zap v1.1.5
 	github.com/gin-gonic/gin v1.11.0
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/joho/godotenv v1.5.1
 	go.uber.org/zap v1.27.0
+	google.golang.org/grpc v1.76.0
+	google.golang.org/protobuf v1.36.9
 )
 
 require (
@@ -17,7 +20,6 @@ require (
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
-	github.com/gin-contrib/zap v1.1.5 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.27.0 // indirect
@@ -50,5 +52,5 @@ require (
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/tools v0.34.0 // indirect
-	google.golang.org/protobuf v1.36.9 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250804133106-a7a43d27e69b // indirect
 )
