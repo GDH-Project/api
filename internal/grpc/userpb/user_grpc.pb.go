@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_CheckCreateUser_FullMethodName    = "/user.UserService/CheckCreateUser"
-	UserService_GetUserInfoByEmail_FullMethodName = "/user.UserService/GetUserInfoByEmail"
-	UserService_CreateUser_FullMethodName         = "/user.UserService/CreateUser"
-	UserService_UpdateUser_FullMethodName         = "/user.UserService/UpdateUser"
-	UserService_DeleteUser_FullMethodName         = "/user.UserService/DeleteUser"
+	UserService_CheckCreateUser_FullMethodName     = "/user.UserService/CheckCreateUser"
+	UserService_GetUserInfoByEmail_FullMethodName  = "/user.UserService/GetUserInfoByEmail"
+	UserService_GetUserInfoByUserID_FullMethodName = "/user.UserService/GetUserInfoByUserID"
+	UserService_CreateUser_FullMethodName          = "/user.UserService/CreateUser"
+	UserService_UpdateUser_FullMethodName          = "/user.UserService/UpdateUser"
+	UserService_DeleteUser_FullMethodName          = "/user.UserService/DeleteUser"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -33,6 +34,7 @@ type UserServiceClient interface {
 	// rpc GetUserInfoByUserID(GetUserInfoByUserIDRequest) returns (GetUserInfoResponse);
 	CheckCreateUser(ctx context.Context, in *GetCheckCreateUserRequest, opts ...grpc.CallOption) (*GetCheckCreateUserResponse, error)
 	GetUserInfoByEmail(ctx context.Context, in *GetUserInfoByEmailRequest, opts ...grpc.CallOption) (*GetUserInfoResponse, error)
+	GetUserInfoByUserID(ctx context.Context, in *GetUserInfoByUserIDRequest, opts ...grpc.CallOption) (*GetUserInfoResponse, error)
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
@@ -60,6 +62,16 @@ func (c *userServiceClient) GetUserInfoByEmail(ctx context.Context, in *GetUserI
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetUserInfoResponse)
 	err := c.cc.Invoke(ctx, UserService_GetUserInfoByEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetUserInfoByUserID(ctx context.Context, in *GetUserInfoByUserIDRequest, opts ...grpc.CallOption) (*GetUserInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserInfoResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserInfoByUserID_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +115,7 @@ type UserServiceServer interface {
 	// rpc GetUserInfoByUserID(GetUserInfoByUserIDRequest) returns (GetUserInfoResponse);
 	CheckCreateUser(context.Context, *GetCheckCreateUserRequest) (*GetCheckCreateUserResponse, error)
 	GetUserInfoByEmail(context.Context, *GetUserInfoByEmailRequest) (*GetUserInfoResponse, error)
+	GetUserInfoByUserID(context.Context, *GetUserInfoByUserIDRequest) (*GetUserInfoResponse, error)
 	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
 	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
@@ -121,6 +134,9 @@ func (UnimplementedUserServiceServer) CheckCreateUser(context.Context, *GetCheck
 }
 func (UnimplementedUserServiceServer) GetUserInfoByEmail(context.Context, *GetUserInfoByEmailRequest) (*GetUserInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserInfoByEmail not implemented")
+}
+func (UnimplementedUserServiceServer) GetUserInfoByUserID(context.Context, *GetUserInfoByUserIDRequest) (*GetUserInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserInfoByUserID not implemented")
 }
 func (UnimplementedUserServiceServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
@@ -184,6 +200,24 @@ func _UserService_GetUserInfoByEmail_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).GetUserInfoByEmail(ctx, req.(*GetUserInfoByEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetUserInfoByUserID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserInfoByUserIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserInfoByUserID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserInfoByUserID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserInfoByUserID(ctx, req.(*GetUserInfoByUserIDRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -256,6 +290,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserInfoByEmail",
 			Handler:    _UserService_GetUserInfoByEmail_Handler,
+		},
+		{
+			MethodName: "GetUserInfoByUserID",
+			Handler:    _UserService_GetUserInfoByUserID_Handler,
 		},
 		{
 			MethodName: "CreateUser",
