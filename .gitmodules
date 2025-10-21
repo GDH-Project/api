@@ -1,0 +1,3 @@
+[submodule "internal/api_spec"]
+	path = internal/api_spec
+	url = https://github.com/GDH-Project/api-interface.git
