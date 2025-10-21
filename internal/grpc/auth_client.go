@@ -74,7 +74,7 @@ func (ac *authClient) Validate(ctx context.Context, accessToken string) (*domain
 	})
 	if err != nil {
 		err = errorFromGrpcError(err)
-		ac.log.Debug("ac.Logout() 실패", zap.Error(err),
+		ac.log.Debug("ac.Validate() 실패", zap.Error(err),
 			zap.String("accessToken", accessToken),
 		)
 		return nil, err
