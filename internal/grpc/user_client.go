@@ -3,12 +3,10 @@ package grpc
 import (
 	"context"
 
-	"github.com/GDH-Proejct/api/cmd/config"
 	"github.com/GDH-Proejct/api/internal/domain"
 	"github.com/GDH-Proejct/api/internal/grpc/userpb"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type userClient struct {
@@ -136,16 +134,7 @@ func (c *userClient) DeleteUser(ctx context.Context, id string, password string)
 	return nil
 }
 
-func NewUserClient(log *zap.Logger, cfg *config.EnvConfig) domain.UserClient {
-	conn, err := grpc.NewClient(
-		cfg.AuthGrpcServer,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		log.Fatal("사용자 gRPC 클라이언트를 초기화 할 수 없습니다..", zap.Error(err),
-			zap.String("url", cfg.AuthGrpcServer),
-		)
-	}
+func NewUserClient(log *zap.Logger, conn *grpc.ClientConn) domain.UserClient {
 
 	client := userpb.NewUserServiceClient(conn)
 
