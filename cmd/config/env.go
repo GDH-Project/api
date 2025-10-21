@@ -7,7 +7,9 @@ import (
 )
 
 type EnvConfig struct {
-	DbUrl string `env:"DB_URL,required"`
+	DbUrl          string `env:"DB_URL,required"`
+	AuthGrpcServer string `env:"AUTH_GRPC_SERVER,required"`
+	HostUrl        string `env:"HOST_URL"`
 }
 
 func GetConfig(log *zap.Logger) *EnvConfig {
