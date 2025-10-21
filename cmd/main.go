@@ -6,8 +6,13 @@ import (
 	"net/http"
 	"time"
 
+	v "github.com/GDH-Proejct/api"
 	"github.com/GDH-Proejct/api/cmd/config"
+	"github.com/GDH-Proejct/api/internal/grpc"
+	m "github.com/GDH-Proejct/api/internal/middleware"
 	"github.com/GDH-Proejct/api/internal/resource"
+	"github.com/GDH-Proejct/api/internal/service"
+	usecase "github.com/GDH-Proejct/api/internal/use_case"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/danielgtaylor/huma/v2/humacli"
@@ -23,7 +28,7 @@ type Options struct {
 func main() {
 	cli := humacli.New(func(hooks humacli.Hooks, opts *Options) {
 		log := config.InitLogger(opts.Debug)
-		version := config.GetVersion(log)
+		version := v.GetVersion(log)
 		cfg := config.GetConfig(log)
 
 		if opts.Debug {
@@ -46,11 +51,32 @@ func main() {
 		humaConfig := huma.DefaultConfig("GDH-API 서버 입니다.", version)
 		humaConfig.CreateHooks = nil
 		humaConfig.SchemasPath = ""
+		humaConfig.Components.SecuritySchemes = map[string]*huma.SecurityScheme{
+			"bearer": {
+				Type:         "http",
+				Scheme:       "bearer",
+				BearerFormat: "JWT",
+			},
+		}
 
-		_ = humagin.New(r, humaConfig)
+		api := humagin.New(r, humaConfig)
 
 		// Dependency
 		_ = resource.InitDB(cfg.DbUrl, log)
+
+		grpcClientConn := grpc.NewBaseClient(log, cfg)
+
+		userGrpcClient := grpc.NewUserClient(log, grpcClientConn)
+		userService := service.NewUserService(log, userGrpcClient)
+		// userUseCase := usecase.NewUserUseCase(log, userService)
+		_ = usecase.NewUserUseCase(log, userService)
+
+		authGrpcClient := grpc.NewAuthClient(log, grpcClientConn)
+		authService := service.NewAuthService(log, authGrpcClient)
+		authUseCase := usecase.NewAuthService(log, authService)
+
+		// middleware := m.NewMiddleware(api, log, authUseCase)
+		_ = m.NewMiddleware(api, log, authUseCase)
 
 		server := http.Server{
 			Addr:    ":8080",
