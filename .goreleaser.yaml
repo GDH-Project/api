@@ -1,0 +1,45 @@
+version: 2
+
+project_name: gdh-api
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - main: ./cmd
+    binary: gdh-api-server
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.Version={{.Version}}
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - "CGO_ENABLED=0"
+
+kos:
+  - base_image: cgr.dev/chainguard/static
+    repositories:
+      - ghcr.io/gdh-project/api
+    main: ./cmd
+    tags:
+      - "{{.Version}}"
+      # tag가 Prerelease 버전이라면 latest는 하지 않음
+      - "{{ if eq .Prerelease \"\" }}latest{{ end }}"
+    bare: true
+    preserve_import_paths: false
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    labels:
+      org.opencontainers.image.authors: "https://github.com/SOPLAY"
+      org.opencontainers.image.created: "{{.Timestamp}}"
+      org.opencontainers.image.source: "https://github.com/gdh-project/api"
+      org.opencontainers.image.url: "https://github.com/gdh-project/api"
+      org.opencontainers.image.vendor: "GDH-Project"
