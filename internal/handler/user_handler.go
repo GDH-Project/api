@@ -152,7 +152,7 @@ func RegisterAuthHandler(api huma.API, log *zap.Logger, authUseCase domain.AuthU
 		DefaultStatus: http.StatusOK,
 	}), func(ctx context.Context, i *struct {
 		Body struct {
-			Name     string `json:"name"`
+			Name     string `json:"name,omitempty"`
 			Password string `json:"password,omitempty" minLength:"8" format:"password"`
 		}
 	}) (*userResponse, error) {
