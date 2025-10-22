@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	v "github.com/GDH-Proejct/api"
@@ -17,6 +18,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/danielgtaylor/huma/v2/humacli"
+	"github.com/gin-contrib/cors"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -43,11 +45,22 @@ func main() {
 
 		if opts.Debug {
 			r = gin.Default()
+
 		} else {
 			r = gin.New()
 			r.Use(ginzap.Ginzap(log, time.RFC3339, true))
 			r.Use(ginzap.RecoveryWithZap(log, true))
 		}
+
+		// cors 설정
+		var corsHosts []string
+		corsConfig := cors.DefaultConfig()
+		if cfg.CorsHostList != "" {
+			corsHosts = strings.Split(cfg.CorsHostList, ",")
+			log.Info("CORS host list", zap.Any("hostlist", corsHosts))
+		}
+		corsConfig.AllowOrigins = corsHosts
+		r.Use(cors.New(corsConfig))
 
 		// huma config
 		humaConfig := huma.DefaultConfig("GDH-API 서버 입니다.", version)
