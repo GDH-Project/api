@@ -30,7 +30,11 @@ jobs:
         with:
           go-version-file: "go.mod"
 
-      - name: Run Release
-        run: make release
+      - name: RUN GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+

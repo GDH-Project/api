@@ -27,7 +27,3 @@ compile:
 lint:
 	@echo "✓ Running goreleaser..."
 	@go tool goreleaser check
-
-release:
-	@echo "✓ Creating and publishing release..."
-	@go tool goreleaser release --clean
