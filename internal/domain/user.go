@@ -14,10 +14,10 @@ const (
 
 type User struct {
 	ID       string
-	Name     string
-	Email    string
-	Password string
-	Role     UserRole
+	Name     string   `json:"name"`
+	Email    string   `json:"email"`
+	Password string   `json:"password"`
+	Role     UserRole `json:"role"`
 }
 
 func ParseStringRoleToUserRole(role string) UserRole {
