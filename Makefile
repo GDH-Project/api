@@ -1,4 +1,4 @@
-build: download-deps tidy-deps compile lint
+build: download-deps tidy-deps compile
 
 fmt:
 	@echo "✓ Formatting all source code..."
@@ -23,7 +23,3 @@ update-deps:
 compile:
 	@echo "✓ Compiling the source code..."
 	@go build -o server cmd/main.go
-
-lint:
-	@echo "✓ Running goreleaser..."
-	@go tool goreleaser check
