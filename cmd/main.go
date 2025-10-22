@@ -27,6 +27,7 @@ type Options struct {
 }
 
 func main() {
+
 	cli := humacli.New(func(hooks humacli.Hooks, opts *Options) {
 		log := config.InitLogger(opts.Debug)
 		version := v.GetVersion(log)

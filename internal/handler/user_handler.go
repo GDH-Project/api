@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -53,9 +52,6 @@ func RegisterAuthHandler(api huma.API, log *zap.Logger, authUseCase domain.AuthU
 			Password: i.Body.Password,
 			Role:     domain.ParseStringRoleToUserRole(i.Body.Role),
 		})
-
-		userId, _ := ctx.Value("user_id").(string)
-		log.Debug("user_id test", zap.String("user_id", userId))
 
 		if err != nil {
 			return nil, huma.Error400BadRequest("사용자 생성에 실패했습니다.", err)
@@ -194,8 +190,6 @@ func RegisterAuthHandler(api huma.API, log *zap.Logger, authUseCase domain.AuthU
 		}
 	}) (*struct{}, error) {
 		userID, _ := ctx.Value("user_id").(string)
-
-		fmt.Printf("id : %s\npw : %s\n", userID, i.Body.Password)
 
 		err := userUseCase.DeleteUser(ctx, userID, i.Body.Password)
 		if err != nil {
