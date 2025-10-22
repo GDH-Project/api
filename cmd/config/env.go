@@ -10,6 +10,7 @@ type EnvConfig struct {
 	DbUrl          string `env:"DB_URL,required"`
 	AuthGrpcServer string `env:"AUTH_GRPC_SERVER,required"`
 	HostUrl        string `env:"HOST_URL"`
+	CorsHostList   string `env:"CORS_HOST_LIST,required"`
 }
 
 func GetConfig(log *zap.Logger) *EnvConfig {
