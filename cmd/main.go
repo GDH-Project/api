@@ -9,6 +9,7 @@ import (
 	v "github.com/GDH-Proejct/api"
 	"github.com/GDH-Proejct/api/cmd/config"
 	"github.com/GDH-Proejct/api/internal/grpc"
+	"github.com/GDH-Proejct/api/internal/handler"
 	m "github.com/GDH-Proejct/api/internal/middleware"
 	"github.com/GDH-Proejct/api/internal/resource"
 	"github.com/GDH-Proejct/api/internal/service"
@@ -26,6 +27,7 @@ type Options struct {
 }
 
 func main() {
+
 	cli := humacli.New(func(hooks humacli.Hooks, opts *Options) {
 		log := config.InitLogger(opts.Debug)
 		version := v.GetVersion(log)
@@ -68,15 +70,16 @@ func main() {
 
 		userGrpcClient := grpc.NewUserClient(log, grpcClientConn)
 		userService := service.NewUserService(log, userGrpcClient)
-		// userUseCase := usecase.NewUserUseCase(log, userService)
-		_ = usecase.NewUserUseCase(log, userService)
+		userUseCase := usecase.NewUserUseCase(log, userService)
 
 		authGrpcClient := grpc.NewAuthClient(log, grpcClientConn)
 		authService := service.NewAuthService(log, authGrpcClient)
 		authUseCase := usecase.NewAuthService(log, authService)
 
-		// middleware := m.NewMiddleware(api, log, authUseCase)
-		_ = m.NewMiddleware(api, log, authUseCase)
+		middleware := m.NewMiddleware(api, log, authUseCase)
+
+		// Register Handler
+		handler.RegisterAuthHandler(api, log, authUseCase, userUseCase, middleware)
 
 		server := http.Server{
 			Addr:    ":8080",
