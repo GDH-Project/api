@@ -1,7 +1,7 @@
 package grpc
 
 import (
-	"github.com/GDH-Proejct/api/cmd/config"
+	"github.com/GDH-Project/api/cmd/config"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

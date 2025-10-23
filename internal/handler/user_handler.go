@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/GDH-Proejct/api/internal/domain"
-	"github.com/GDH-Proejct/api/internal/middleware"
+	"github.com/GDH-Project/api/internal/domain"
+	"github.com/GDH-Project/api/internal/middleware"
 	"github.com/danielgtaylor/huma/v2"
 	"go.uber.org/zap"
 )

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/GDH-Proejct/api/internal/domain"
+	"github.com/GDH-Project/api/internal/domain"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
