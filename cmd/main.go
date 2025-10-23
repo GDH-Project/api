@@ -50,6 +50,7 @@ func main() {
 			r = gin.Default()
 		} else {
 			r = gin.New()
+			r.TrustedPlatform = gin.PlatformCloudflare
 			r.Use(ginzap.Ginzap(log, time.RFC3339, true))
 			r.Use(ginzap.RecoveryWithZap(log, true))
 		}
@@ -92,6 +93,9 @@ func main() {
 		authUseCase := usecase.NewAuthService(log, authService)
 
 		middleware := m.NewMiddleware(api, log, authUseCase)
+
+		// gRPC 미들웨어 적용
+		r.Use(middleware.WithGrpcMeta())
 
 		// Register Handler
 		handler.RegisterAuthHandler(api, log, authUseCase, userUseCase, middleware)
