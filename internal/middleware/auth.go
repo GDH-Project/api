@@ -5,28 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/GDH-Proejct/api/internal/domain"
 	"github.com/danielgtaylor/huma/v2"
 	"go.uber.org/zap"
 )
-
-type Middleware interface {
-	WithAuth(op huma.Operation) huma.Operation
-}
-
-type middleware struct {
-	api         huma.API
-	log         *zap.Logger
-	authUseCase domain.AuthUseCase
-}
-
-func NewMiddleware(api huma.API, log *zap.Logger, authUseCase domain.AuthUseCase) Middleware {
-	return &middleware{
-		api:         api,
-		log:         log,
-		authUseCase: authUseCase,
-	}
-}
 
 // WithAuth
 //
@@ -39,7 +20,6 @@ func (m *middleware) WithAuth(op huma.Operation) huma.Operation {
 
 func (m *middleware) authMiddleware(ctx huma.Context, next func(huma.Context)) {
 	authHeader := ctx.Header("Authorization")
-
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 		err := errors.New("인증 헤더가 없거나 유효하지 않습니다")
 		m.log.Info("Authorization 헤더가 없거나 유효하지 않습니다", zap.Error(err))

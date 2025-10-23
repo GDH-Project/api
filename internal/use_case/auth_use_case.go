@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 
-	"github.com/GDH-Proejct/api/internal/domain"
+	"github.com/GDH-Project/api/internal/domain"
 	"go.uber.org/zap"
 )
 
