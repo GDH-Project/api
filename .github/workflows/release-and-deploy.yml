@@ -36,6 +36,7 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
   deploy:
+    needs: goreleaser
     runs-on: ubuntu-latest
     container: ghcr.io/railwayapp/cli:latest
     env:
