@@ -3,8 +3,8 @@ package grpc
 import (
 	"context"
 
-	"github.com/GDH-Proejct/api/internal/domain"
-	"github.com/GDH-Proejct/api/internal/grpc/authpb"
+	"github.com/GDH-Project/api/internal/domain"
+	"github.com/GDH-Project/api/internal/grpc/authpb"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )

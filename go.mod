@@ -1,4 +1,4 @@
-module github.com/GDH-Proejct/api
+module github.com/GDH-Project/api
 
 go 1.25.1
 
