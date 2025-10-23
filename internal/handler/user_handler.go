@@ -14,9 +14,9 @@ import (
 type userResponse struct {
 	Status int
 	Body   struct {
-		Name  string `json:"name"`
-		Email string `json:"email"`
-		Role  string `json:"role"`
+		Name  string `json:"name" doc:"사용자 닉네임 입니다." example:"사용자1"`
+		Email string `json:"email" doc:"이메일 입니다." example:"example@example.com"`
+		Role  string `json:"role" doc:"사용자의 권한 입니다. 'user','device','admin'이 존재합니다." example:"user"`
 	}
 }
 
@@ -143,17 +143,17 @@ func RegisterAuthHandler(api huma.API, log *zap.Logger, authUseCase domain.AuthU
 
 	// 사용자 정보 업데이트
 	huma.Register(v1, m.WithAuth(huma.Operation{
-		OperationID:   "v1UpdateUserInfo",
+		OperationID:   "v1AuthUpdateUserInfo",
 		Method:        http.MethodPut,
 		Path:          "/user",
 		Summary:       "사용자 정보 업데이트",
-		Description:   "사용자 정보 업데이트 API 입니다.",
+		Description:   `사용자 정보 업데이트 API 입니다. (업데이트 할 요소만 추가해서 보내면 됩니다.)`,
 		Tags:          []string{"Auth"},
 		DefaultStatus: http.StatusOK,
 	}), func(ctx context.Context, i *struct {
 		Body struct {
-			Name     string `json:"name,omitempty"`
-			Password string `json:"password,omitempty" minLength:"8" format:"password"`
+			Name     string `json:"name,omitempty" doc:"변경할 사용자 닉네임 입니다." example:"사용자3"`
+			Password string `json:"password,omitempty" minLength:"8" format:"password" doc:"변경할 비밀번호 입니다." example:"change_password"`
 		}
 	}) (*userResponse, error) {
 		var resp userResponse
@@ -177,7 +177,7 @@ func RegisterAuthHandler(api huma.API, log *zap.Logger, authUseCase domain.AuthU
 
 	// 회원 탈퇴
 	huma.Register(v1, m.WithAuth(huma.Operation{
-		OperationID:   "v1DeleteUser",
+		OperationID:   "v1AuthDeleteUser",
 		Method:        http.MethodPost,
 		Path:          "/user/delete",
 		Summary:       "회원 탈퇴",
@@ -186,7 +186,7 @@ func RegisterAuthHandler(api huma.API, log *zap.Logger, authUseCase domain.AuthU
 		DefaultStatus: http.StatusOK,
 	}), func(ctx context.Context, i *struct {
 		Body struct {
-			Password string `json:"password" minLength:"8" format:"password"`
+			Password string `json:"password" minLength:"8" format:"password" doc:"사용자 비밀번호 입니다." example:"password"`
 		}
 	}) (*struct{}, error) {
 		userID, _ := ctx.Value("user_id").(string)
@@ -194,6 +194,31 @@ func RegisterAuthHandler(api huma.API, log *zap.Logger, authUseCase domain.AuthU
 		err := userUseCase.DeleteUser(ctx, userID, i.Body.Password)
 		if err != nil {
 			return nil, huma.Error500InternalServerError(err.Error())
+		}
+
+		return nil, nil
+	})
+
+	// 이메일 혹은 닉네임이 사용중인지 확인
+	huma.Register(v1, huma.Operation{
+		OperationID:   "v1AuthCheckUser",
+		Method:        http.MethodGet,
+		Path:          "/users/check",
+		Summary:       "이메일, 닉네임 확인",
+		Description:   "이메일, 닉네임 확인 API 입니다.",
+		Tags:          []string{"Auth"},
+		DefaultStatus: http.StatusOK,
+	}, func(ctx context.Context, i *struct {
+		Email string `query:"email,omitempty" doc:"확인 대상 사용자 이메일 입니다." type:"email" example:"example@email.com"`
+		Name  string `query:"name,omitempty" minLength:"3" doc:"확인 대상 사용자 닉네임 입니다." example:"사용자"`
+	}) (*struct{}, error) {
+		log.Info("입력 정보", zap.String("email", i.Email), zap.String("name", i.Name))
+		if i.Email == "" || i.Name == "" {
+			return nil, huma.Error400BadRequest("email 혹은 name 중 한가지 이상 필수로 보내야 합니다.")
+		}
+		err := userUseCase.CheckCreateUser(ctx, i.Email, i.Name)
+		if err != nil {
+			return nil, huma.Error409Conflict("사용할 수 없는 값입니다.")
 		}
 
 		return nil, nil
