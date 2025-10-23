@@ -212,8 +212,7 @@ func RegisterAuthHandler(api huma.API, log *zap.Logger, authUseCase domain.AuthU
 		Email string `query:"email,omitempty" doc:"확인 대상 사용자 이메일 입니다." type:"email" example:"example@email.com"`
 		Name  string `query:"name,omitempty" minLength:"3" doc:"확인 대상 사용자 닉네임 입니다." example:"사용자"`
 	}) (*struct{}, error) {
-		log.Info("입력 정보", zap.String("email", i.Email), zap.String("name", i.Name))
-		if i.Email == "" || i.Name == "" {
+		if i.Email == "" && i.Name == "" {
 			return nil, huma.Error400BadRequest("email 혹은 name 중 한가지 이상 필수로 보내야 합니다.")
 		}
 		err := userUseCase.CheckCreateUser(ctx, i.Email, i.Name)
