@@ -5,8 +5,8 @@ import (
 )
 
 type Token struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	AccessToken  string `json:"access_token" doc:"엑세스 토큰입니다." example:"access_token"`
+	RefreshToken string `json:"refresh_token" doc:"리프레시 토큰입니다." example:"refresh_token"`
 }
 
 type AuthClient interface {
