@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	v "github.com/GDH-Proejct/api"
 	"github.com/GDH-Proejct/api/cmd/config"
 	"github.com/GDH-Proejct/api/internal/grpc"
 	"github.com/GDH-Proejct/api/internal/handler"
@@ -24,6 +23,10 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	Version = "dev"
+)
+
 type Options struct {
 	Debug bool `doc:"Enable debug logging" short:"d"`
 }
@@ -32,7 +35,7 @@ func main() {
 
 	cli := humacli.New(func(hooks humacli.Hooks, opts *Options) {
 		log := config.InitLogger(opts.Debug)
-		version := v.GetVersion(log)
+		log.Info("GDH Project API SERVER", zap.String("version", Version))
 		cfg := config.GetConfig(log)
 
 		if opts.Debug {
@@ -45,7 +48,6 @@ func main() {
 
 		if opts.Debug {
 			r = gin.Default()
-
 		} else {
 			r = gin.New()
 			r.Use(ginzap.Ginzap(log, time.RFC3339, true))
@@ -63,7 +65,7 @@ func main() {
 		r.Use(cors.New(corsConfig))
 
 		// huma config
-		humaConfig := huma.DefaultConfig("GDH-API 서버 입니다.", version)
+		humaConfig := huma.DefaultConfig("GDH-API 서버 입니다.", Version)
 		humaConfig.CreateHooks = nil
 		humaConfig.SchemasPath = ""
 		humaConfig.Components.SecuritySchemes = map[string]*huma.SecurityScheme{
