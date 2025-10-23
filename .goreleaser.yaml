@@ -35,6 +35,8 @@ kos:
       - "{{ if eq .Prerelease \"\" }}latest{{ end }}"
     bare: true
     preserve_import_paths: false
+    ldflags:
+      - -s -w -X main.Version={{.Version}}
     platforms:
       - linux/amd64
       - linux/arm64
