@@ -63,6 +63,7 @@ func main() {
 			log.Info("CORS host list", zap.Any("hostlist", corsHosts))
 		}
 		corsConfig.AllowOrigins = corsHosts
+		corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
 		r.Use(cors.New(corsConfig))
 
 		// huma config
