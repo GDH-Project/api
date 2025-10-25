@@ -94,7 +94,7 @@ type Crop struct {
 //
 // 통신 주기 입니다.
 type UpdateCycle struct {
-	ID       int
+	ID       int     `json:"-"`
 	Interval int     `json:"interval" doc:"통신 주기(분)" example:"60"`
 	Desc     *string `json:"desc,omitempty" doc:"설명입니다." example:"1시간 주기 업데이트"`
 }
@@ -103,7 +103,7 @@ type UpdateCycle struct {
 //
 // 주소 도/특별시 정보 입니다.
 type AddressState struct {
-	ID    int
+	ID    int    `json:"-"`
 	Title string `json:"title" doc:"도/특별시 입니다." example:"서울특별시"`
 }
 
@@ -111,7 +111,7 @@ type AddressState struct {
 //
 // 시/군/구 정보 입니다.
 type AddressCity struct {
-	ID         int
-	StateTitle string // 도/특별시 title ex)"서울특별시"
+	ID         int    `json:"-"`
+	StateTitle string `json:"state_title" doc:"도/특별시" example:"서울특별시"`
 	Title      string `json:"title" doc:"시/군/구" example:"동대문구"`
 }
