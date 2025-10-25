@@ -216,12 +216,12 @@ func (r *metaRepository) GetAddressCityListByState(ctx context.Context, state st
 	rows, err := r.db.Query(ctx, q,
 		state,
 	)
-	defer rows.Close()
 
 	if err != nil {
 		r.log.Error("device.r.GetAddressCityListByState() 오류", zap.Error(err))
 		return nil, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var addressCity domain.AddressCity
