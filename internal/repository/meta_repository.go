@@ -9,12 +9,12 @@ import (
 	"go.uber.org/zap"
 )
 
-type deviceRepository struct {
+type metaRepository struct {
 	log *zap.Logger
 	db  *pgxpool.Pool
 }
 
-func (r *deviceRepository) GetSensorList(ctx context.Context) ([]*domain.Sensor, error) {
+func (r *metaRepository) GetSensorList(ctx context.Context) ([]*domain.Sensor, error) {
 	q := `SELECT id, title, eng_title, description, unit, unit_description FROM device.sensor;`
 	rows, err := r.db.Query(ctx, q)
 	if err != nil {
@@ -50,7 +50,7 @@ func (r *deviceRepository) GetSensorList(ctx context.Context) ([]*domain.Sensor,
 	return sensorList, nil
 }
 
-func (r *deviceRepository) GetSensorByParam(ctx context.Context, in *domain.Sensor) (*domain.Sensor, error) {
+func (r *metaRepository) GetSensorByParam(ctx context.Context, in *domain.Sensor) (*domain.Sensor, error) {
 
 	if in.ID == 0 && in.Title == "" {
 		r.log.Error("ID 혹은 Title은 필수 입니다")
@@ -82,7 +82,7 @@ func (r *deviceRepository) GetSensorByParam(ctx context.Context, in *domain.Sens
 	return &sensor, nil
 }
 
-func (r *deviceRepository) GetCropList(ctx context.Context) ([]*domain.Crop, error) {
+func (r *metaRepository) GetCropList(ctx context.Context) ([]*domain.Crop, error) {
 	var cropList []*domain.Crop
 
 	q := `SELECT id, title, description FROM device.crop`
@@ -114,7 +114,7 @@ func (r *deviceRepository) GetCropList(ctx context.Context) ([]*domain.Crop, err
 	return cropList, nil
 }
 
-func (r *deviceRepository) GetCropByParam(ctx context.Context, in *domain.Crop) (*domain.Crop, error) {
+func (r *metaRepository) GetCropByParam(ctx context.Context, in *domain.Crop) (*domain.Crop, error) {
 	var crop domain.Crop
 	q := `
 		SELECT id, title, description 
@@ -138,7 +138,7 @@ func (r *deviceRepository) GetCropByParam(ctx context.Context, in *domain.Crop) 
 	return &crop, nil
 }
 
-func (r *deviceRepository) GetUpdateCycleList(ctx context.Context) ([]*domain.UpdateCycle, error) {
+func (r *metaRepository) GetUpdateCycleList(ctx context.Context) ([]*domain.UpdateCycle, error) {
 	var updateCycleList []*domain.UpdateCycle
 	q := `SELECT id, interval, description FROM device.update_cycle`
 	rows, err := r.db.Query(ctx, q)
@@ -168,7 +168,7 @@ func (r *deviceRepository) GetUpdateCycleList(ctx context.Context) ([]*domain.Up
 	return updateCycleList, nil
 }
 
-func (r *deviceRepository) GetAddressStateList(ctx context.Context) ([]*domain.AddressState, error) {
+func (r *metaRepository) GetAddressStateList(ctx context.Context) ([]*domain.AddressState, error) {
 	var addressStateList []*domain.AddressState
 	q := `SELECT id,title FROM device.address_state`
 	rows, err := r.db.Query(ctx, q)
@@ -196,7 +196,7 @@ func (r *deviceRepository) GetAddressStateList(ctx context.Context) ([]*domain.A
 	return addressStateList, nil
 }
 
-func (r *deviceRepository) GetAddressCityListByState(ctx context.Context, state string) ([]*domain.AddressCity, error) {
+func (r *metaRepository) GetAddressCityListByState(ctx context.Context, state string) ([]*domain.AddressCity, error) {
 	var addressCityList []*domain.AddressCity
 	q := `
 		SELECT 
@@ -238,8 +238,8 @@ func (r *deviceRepository) GetAddressCityListByState(ctx context.Context, state 
 	return addressCityList, nil
 }
 
-func NewDeviceRepository(logger *zap.Logger, db *pgxpool.Pool) domain.DeviceRepository {
-	return &deviceRepository{
+func MetaRepository(logger *zap.Logger, db *pgxpool.Pool) domain.MetaRepository {
+	return &metaRepository{
 		log: logger,
 		db:  db,
 	}
