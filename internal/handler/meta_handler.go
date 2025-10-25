@@ -69,7 +69,7 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 	}, func(ctx context.Context, i *struct{}) (*sensorListResponse, error) {
 		var resp sensorListResponse
 		sensorList, err := metaUseCase.GetSensorList(ctx)
-		if err != nil {
+		if err != nil || len(sensorList) == 0 {
 			log.Error("meta.h.v1MetaGetSensorList 오류", zap.Error(err))
 			return nil, huma.Error500InternalServerError("전체 센서 데이터를 불러오는 도중 오류가 발생했습니다.")
 		}
@@ -121,7 +121,7 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 	}, func(ctx context.Context, i *struct{}) (*addressStateListResponse, error) {
 		var resp addressStateListResponse
 		addressStateList, err := metaUseCase.GetAddressStateList(ctx)
-		if err != nil {
+		if err != nil || len(addressStateList) == 0 {
 			log.Error("meta.h.v1MetaGetAddressState 오류", zap.Error(err))
 			return nil, huma.Error500InternalServerError("주소 데이터를 불러오는 도중 오류가 발생했습니다.")
 		}
@@ -176,7 +176,7 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 	}, func(ctx context.Context, i *struct{}) (*cropListResponse, error) {
 		var resp cropListResponse
 		cropList, err := metaUseCase.GetCropList(ctx)
-		if err != nil {
+		if err != nil || len(cropList) == 0 {
 			log.Error("meta.h.v1MetaGetCropList 오류", zap.Error(err))
 			return nil, huma.Error500InternalServerError("전체 작물 데이터를 불러오는 도중 오류가 발생했습니다.")
 		}
