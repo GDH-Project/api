@@ -50,7 +50,7 @@ type cropResponse struct {
 
 type updateCycleListResponse struct {
 	Body struct {
-		Data []*domain.UpdateCycle `json:"data" json:"업데이트 주기 정보 JSON 배열 입니다."`
+		Data []*domain.UpdateCycle `json:"data" doc:"업데이트 주기 정보 JSON 배열 입니다."`
 	}
 }
 
