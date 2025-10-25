@@ -98,8 +98,6 @@ func main() {
 		metaService := service.NewMetaService(log, metaRepository)
 		metaUseCase := usecase.NewMetaUseCase(log, metaService)
 
-		_ = repository.MetaRepository(log, db)
-
 		middleware := m.NewMiddleware(api, log, authUseCase)
 
 		// gRPC 미들웨어 적용
