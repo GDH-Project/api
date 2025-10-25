@@ -91,6 +91,7 @@ func (r *metaRepository) GetCropList(ctx context.Context) ([]*domain.Crop, error
 		r.log.Error("device.r.GetCropList() 오류", zap.Error(err))
 		return nil, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var crop domain.Crop
@@ -146,6 +147,8 @@ func (r *metaRepository) GetUpdateCycleList(ctx context.Context) ([]*domain.Upda
 		r.log.Error("device.r.GetUpdateCycleList() 오류", zap.Error(err))
 		return nil, err
 	}
+	defer rows.Close()
+
 	for rows.Next() {
 		var updateCycle domain.UpdateCycle
 		if err := rows.Scan(
@@ -176,6 +179,8 @@ func (r *metaRepository) GetAddressStateList(ctx context.Context) ([]*domain.Add
 		r.log.Error("device.r.GetAddressStateList() 오류", zap.Error(err))
 		return nil, err
 	}
+	defer rows.Close()
+
 	for rows.Next() {
 		var addressState domain.AddressState
 		if err := rows.Scan(
@@ -211,6 +216,8 @@ func (r *metaRepository) GetAddressCityListByState(ctx context.Context, state st
 	rows, err := r.db.Query(ctx, q,
 		state,
 	)
+	defer rows.Close()
+
 	if err != nil {
 		r.log.Error("device.r.GetAddressCityListByState() 오류", zap.Error(err))
 		return nil, err
