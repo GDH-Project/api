@@ -73,7 +73,7 @@ type MetaUseCase interface {
 //
 // 수집되는 센서 데이터 정보 입니다.
 type Sensor struct {
-	ID       int
+	ID       int     `json:"id" doc:"센서의 고유 ID 입니다." example:"1"`
 	Title    string  `json:"title" doc:"센서의 한글 명칭 입니다." example:"기온"`
 	EngTitle string  `json:"eng_title" doc:"센서의 영어 명칭 입니다." example:"Air Temperature"`
 	Desc     string  `json:"desc" doc:"센서 설명 입니다." example:"작물의 광합성, 호흡, 증산 작용에 직접적인 영향을 미치는 대기의 온도"`
