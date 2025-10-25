@@ -11,6 +11,7 @@ import (
 	"github.com/GDH-Project/api/internal/grpc"
 	"github.com/GDH-Project/api/internal/handler"
 	m "github.com/GDH-Project/api/internal/middleware"
+	"github.com/GDH-Project/api/internal/repository"
 	"github.com/GDH-Project/api/internal/resource"
 	"github.com/GDH-Project/api/internal/service"
 	usecase "github.com/GDH-Project/api/internal/use_case"
@@ -81,8 +82,8 @@ func main() {
 		api := humagin.New(r, humaConfig)
 
 		// Dependency
-		_ = resource.InitDB(cfg.DbUrl, log)
-
+		db := resource.InitDB(cfg.DbUrl, log)
+		// gRPC Client 생성
 		grpcClientConn := grpc.NewBaseClient(log, cfg)
 
 		userGrpcClient := grpc.NewUserClient(log, grpcClientConn)
@@ -93,6 +94,10 @@ func main() {
 		authService := service.NewAuthService(log, authGrpcClient)
 		authUseCase := usecase.NewAuthService(log, authService)
 
+		metaRepository := repository.MetaRepository(log, db)
+		metaService := service.NewMetaService(log, metaRepository)
+		metaUseCase := usecase.NewMetaUseCase(log, metaService)
+
 		middleware := m.NewMiddleware(api, log, authUseCase)
 
 		// gRPC 미들웨어 적용
@@ -100,6 +105,7 @@ func main() {
 
 		// Register Handler
 		handler.RegisterAuthHandler(api, log, authUseCase, userUseCase, middleware)
+		handler.RegisterMetaHandler(api, log, metaUseCase)
 
 		server := http.Server{
 			Addr:    ":8080",
