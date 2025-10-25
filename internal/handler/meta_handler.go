@@ -48,6 +48,12 @@ type cropResponse struct {
 	}
 }
 
+type updateCycleListResponse struct {
+	Body struct {
+		Data []*domain.UpdateCycle `json:"data" json:"업데이트 주기 정보 JSON 배열 입니다."`
+	}
+}
+
 func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaUseCase) {
 	v1 := huma.NewGroup(api, "/api/v1")
 
@@ -200,6 +206,28 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		}
 
 		resp.Body.Data = crop
+
+		return &resp, nil
+	})
+
+	// 갱신 주기 조회
+	huma.Register(v1, huma.Operation{
+		OperationID:   "v1MetaGetUpdateCycleList",
+		Method:        http.MethodGet,
+		Path:          "/meta/update-cycle",
+		Summary:       "전체 업데이트 주기 조회",
+		Description:   "전체 업데이트 주기 조회 API 입니다. 장비의 업데이트 주기에 사용되는 데이터 입니다.",
+		Tags:          []string{"Meta"},
+		DefaultStatus: http.StatusOK,
+	}, func(ctx context.Context, i *struct{}) (*updateCycleListResponse, error) {
+		var resp updateCycleListResponse
+		updateCycleList, err := metaUseCase.GetUpdateCycleList(ctx)
+		if err != nil || len(updateCycleList) == 0 {
+			log.Error("meta.h.v1MetaGetUpdateCycleList 오류", zap.Error(err))
+			return nil, huma.Error500InternalServerError("업데이트 주기 정보를 불러오는 중 오류가 발생했습니다.")
+		}
+
+		resp.Body.Data = updateCycleList
 
 		return &resp, nil
 	})
