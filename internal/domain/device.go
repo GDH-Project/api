@@ -11,16 +11,16 @@ type DeviceRepository interface {
 	// GetSensorByParam 센서를 파라미터를 통해 조회
 	GetSensorByParam(ctx context.Context, in *Sensor) (*Sensor, error)
 
-	// GetAllCropList 모든 작물 정보 조회
-	GetAllCropList(ctx context.Context) ([]*Crop, error)
+	// GetCropList 모든 작물 정보 조회
+	GetCropList(ctx context.Context) ([]*Crop, error)
 	// GetCropByParam 작물 파라미터를 통해 조회
-	GetCropByParam(ctx context.Context, in *Sensor) (*Crop, error)
+	GetCropByParam(ctx context.Context, in *Crop) (*Crop, error)
 
-	// GetAllUpdateCycleList 업데이트 주기 조회
-	GetAllUpdateCycleList(ctx context.Context) ([]*UpdateCycle, error)
+	// GetUpdateCycleList 업데이트 주기 조회
+	GetUpdateCycleList(ctx context.Context) ([]*UpdateCycle, error)
 
-	// GetAllAddressStateList 도/특별시 전체 리스트 조회
-	GetAllAddressStateList(ctx context.Context) ([]*AddressState, error)
+	// GetAddressStateList 도/특별시 전체 리스트 조회
+	GetAddressStateList(ctx context.Context) ([]*AddressState, error)
 	// GetAddressCityListByState 도/특별시 정보를 통해 시/군/구 리스트 반환
 	GetAddressCityListByState(ctx context.Context, state string) ([]*AddressCity, error)
 
@@ -38,16 +38,16 @@ type DeviceService interface {
 	// GetSensorByParam 센서를 파라미터를 통해 조회
 	GetSensorByParam(ctx context.Context, in *Sensor) (*Sensor, error)
 
-	// GetAllCropList 모든 작물 정보 조회
-	GetAllCropList(ctx context.Context) ([]*Crop, error)
+	// GetCropList 모든 작물 정보 조회
+	GetCropList(ctx context.Context) ([]*Crop, error)
 	// GetCropByParam 작물 파라미터를 통해 조회
-	GetCropByParam(ctx context.Context, in *Sensor) (*Crop, error)
+	GetCropByParam(ctx context.Context, in *Crop) (*Crop, error)
 
-	// GetAllUpdateCycleList 업데이트 주기 조회
-	GetAllUpdateCycleList(ctx context.Context) ([]*UpdateCycle, error)
+	// GetUpdateCycleList 업데이트 주기 조회
+	GetUpdateCycleList(ctx context.Context) ([]*UpdateCycle, error)
 
-	// GetAllAddressStateList 도/특별시 전체 리스트 조회
-	GetAllAddressStateList(ctx context.Context) ([]*AddressState, error)
+	// GetAddressStateList 도/특별시 전체 리스트 조회
+	GetAddressStateList(ctx context.Context) ([]*AddressState, error)
 	// GetAddressCityListByState 도/특별시 정보를 통해 시/군/구 리스트 반환
 	GetAddressCityListByState(ctx context.Context, state string) ([]*AddressCity, error)
 }
@@ -58,16 +58,16 @@ type DeviceUseCase interface {
 	// GetSensorByParam 센서를 파라미터를 통해 조회
 	GetSensorByParam(ctx context.Context, in *Sensor) (*Sensor, error)
 
-	// GetAllCropList 모든 작물 정보 조회
-	GetAllCropList(ctx context.Context) ([]*Crop, error)
+	// GetCropList 모든 작물 정보 조회
+	GetCropList(ctx context.Context) ([]*Crop, error)
 	// GetCropByParam 작물 파라미터를 통해 조회
-	GetCropByParam(ctx context.Context, in *Sensor) (*Crop, error)
+	GetCropByParam(ctx context.Context, in *Crop) (*Crop, error)
 
-	// GetAllUpdateCycleList 업데이트 주기 조회
-	GetAllUpdateCycleList(ctx context.Context) ([]*UpdateCycle, error)
+	// GetUpdateCycleList 업데이트 주기 조회
+	GetUpdateCycleList(ctx context.Context) ([]*UpdateCycle, error)
 
-	// GetAllAddressStateList 도/특별시 전체 리스트 조회
-	GetAllAddressStateList(ctx context.Context) ([]*AddressState, error)
+	// GetAddressStateList 도/특별시 전체 리스트 조회
+	GetAddressStateList(ctx context.Context) ([]*AddressState, error)
 	// GetAddressCityListByState 도/특별시 정보를 통해 시/군/구 리스트 반환
 	GetAddressCityListByState(ctx context.Context, state string) ([]*AddressCity, error)
 }
@@ -82,11 +82,11 @@ type Page struct {
 // 수집되는 센서 데이터 정보 입니다.
 type Sensor struct {
 	ID       int
-	Title    string `json:"title" doc:"센서의 한글 명칭 입니다." example:"기온"`
-	EngTitle string `json:"eng_title" doc:"센서의 영어 명칭 입니다." example:"Air Temperature"`
-	Desc     string `json:"desc" doc:"센서 설명 입니다." example:"작물의 광합성, 호흡, 증산 작용에 직접적인 영향을 미치는 대기의 온도"`
-	Unit     string `json:"unit,omitempty" doc:"센서 단위 입니다." example:"°C"`
-	UnitDesc string `json:"unit_desc,omitempty" doc:"센서 단위 설명 입니다." example:"섭씨"`
+	Title    string  `json:"title" doc:"센서의 한글 명칭 입니다." example:"기온"`
+	EngTitle string  `json:"eng_title" doc:"센서의 영어 명칭 입니다." example:"Air Temperature"`
+	Desc     string  `json:"desc" doc:"센서 설명 입니다." example:"작물의 광합성, 호흡, 증산 작용에 직접적인 영향을 미치는 대기의 온도"`
+	Unit     *string `json:"unit,omitempty" doc:"센서 단위 입니다." example:"°C"`
+	UnitDesc *string `json:"unit_desc,omitempty" doc:"센서 단위 설명 입니다." example:"섭씨"`
 }
 
 // Crop
@@ -94,8 +94,8 @@ type Sensor struct {
 // 작물 정보 입니다.
 type Crop struct {
 	ID    int
-	Title string `json:"title" doc:"작물명" example:"토마토"`
-	Desc  string `json:"desc,omitempty" doc:"작물의 설명"`
+	Title string  `json:"title" doc:"작물명" example:"토마토"`
+	Desc  *string `json:"desc,omitempty" doc:"작물의 설명"`
 }
 
 // UpdateCycle
@@ -103,8 +103,8 @@ type Crop struct {
 // 통신 주기 입니다.
 type UpdateCycle struct {
 	ID       int
-	Interval int `json:"interval" doc:"통신 주기(분)" example:"60"`
-	Desc     int `json:"desc,omitempty" doc:"설명입니다." example:"1시간 주기 업데이트"`
+	Interval int     `json:"interval" doc:"통신 주기(분)" example:"60"`
+	Desc     *string `json:"desc,omitempty" doc:"설명입니다." example:"1시간 주기 업데이트"`
 }
 
 // AddressState
@@ -146,11 +146,11 @@ type DeviceRequestSchema struct {
 type DeviceInfo struct {
 	UserID string // 유저의 UUID 입니다.
 
-	ID          string `json:"id" doc:"장치 고유 ID 입니다." format:"uuid"`
-	Title       string `json:"title" doc:"검색에 노출되는 명칭입니다." example:"경기도 안양시 자동 재배 시설 토마토 데이터"`
-	Name        string `json:"name,omitempty" doc:"장치관리자에게 보이는 고유 명칭 입니다." example:"안양시 스마트 펙토리 토마토 A-B1 섹터"`
-	Crop        string `json:"crop" doc:"작물 정보 입니다." example:"토마토"`
-	UpdateCycle int    `json:"update_cycle" doc:"데이터 업데이트 주기 입니다." example:"60"`
+	ID          string  `json:"id" doc:"장치 고유 ID 입니다." format:"uuid"`
+	Title       string  `json:"title" doc:"검색에 노출되는 명칭입니다." example:"경기도 안양시 자동 재배 시설 토마토 데이터"`
+	Name        *string `json:"name,omitempty" doc:"장치관리자에게 보이는 고유 명칭 입니다." example:"안양시 스마트 펙토리 토마토 A-B1 섹터"`
+	Crop        string  `json:"crop" doc:"작물 정보 입니다." example:"토마토"`
+	UpdateCycle int     `json:"update_cycle" doc:"데이터 업데이트 주기 입니다." example:"60"`
 	Address     struct {
 		State string `json:"state" doc:"도/특별시 명칭 입니다." example:"경기도"`
 		City  string `json:"city" doc:"시/군/구 명칭 입니다." example:"안양시"`
