@@ -89,7 +89,7 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		Tags:          []string{"Meta"},
 		DefaultStatus: http.StatusOK,
 	}, func(ctx context.Context, i *struct {
-		ID int `path:"id" doc:"센서 ID 입니다." example:"1"`
+		ID int `path:"id" required:"true" doc:"센서 ID 입니다." example:"1"`
 	}) (*sensorResponse, error) {
 		var resp sensorResponse
 		sensor, err := metaUseCase.GetSensorByParam(ctx, &domain.Sensor{ID: i.ID})
@@ -141,7 +141,7 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		Tags:          []string{"Meta"},
 		DefaultStatus: http.StatusOK,
 	}, func(ctx context.Context, i *struct {
-		State string `query:"state" doc:"도/특별시 Title 입니다." example:"서울특별시"`
+		State string `query:"state" required:"true" doc:"도/특별시 Title 입니다." example:"서울특별시"`
 	}) (*addressCityListResponse, error) {
 		var resp addressCityListResponse
 		addressCityList, err := metaUseCase.GetAddressCityListByState(ctx, i.State)
@@ -196,7 +196,7 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		Tags:          []string{"Meta"},
 		DefaultStatus: http.StatusOK,
 	}, func(ctx context.Context, i *struct {
-		Title string `path:"title" doc:"작물 명칭 입니다." example:"토마토"`
+		Title string `path:"title" required:"true" doc:"작물 명칭 입니다." example:"토마토"`
 	}) (*cropResponse, error) {
 		var resp cropResponse
 		crop, err := metaUseCase.GetCropByParam(ctx, &domain.Crop{Title: i.Title})
