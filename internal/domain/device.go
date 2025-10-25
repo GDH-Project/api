@@ -10,8 +10,10 @@ import (
 type DeviceRepository interface {
 	// WithTransaction 트렌잭션 함수
 	WithTransaction(ctx context.Context, f func(tx pgx.Tx) error) error
-	// CreateDeviceInfoTx device를 생성하고 ID 와 오류를 반환
+	// CreateDeviceInfoTx deviceInfo를 생성하고 ID 와 오류를 반환
 	CreateDeviceInfoTx(ctx context.Context, tx pgx.Tx, in *CreateDeviceInfo) (string, error)
+	// GetDeviceInfoByID deviceInfo 를 ID 기준으로 찾아서 반환
+	GetDeviceInfoByID(ctx context.Context, id string) (*DeviceInfo, error)
 }
 
 // DeviceData
@@ -43,7 +45,7 @@ type CreateDeviceInfo struct {
 	AddressCityID  int
 }
 type DeviceInfo struct {
-	UserID string // 유저의 UUID 입니다.
+	UserID string `json:"-"` // 유저의 UUID 입니다.
 
 	ID          string  `json:"id" doc:"장치 고유 ID 입니다." format:"uuid"`
 	Title       string  `json:"title" doc:"검색에 노출되는 명칭입니다." example:"안양시 자동 재배 시설 토마토 데이터"`
