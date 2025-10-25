@@ -6,17 +6,20 @@ import (
 	"net/http"
 
 	"github.com/GDH-Project/api/internal/domain"
+	"github.com/GDH-Project/api/internal/util"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
 )
 
 type sensorListResponse struct {
+	util.CacheHeader
 	Body struct {
 		Data []*domain.Sensor `json:"data" doc:"센서 정보 JSON 배열 입니다."`
 	}
 }
 type sensorResponse struct {
+	util.CacheHeader
 	Body struct {
 		Data *domain.Sensor `json:"data" doc:"센서 정보 JSON 입니다."`
 	}
@@ -24,6 +27,7 @@ type sensorResponse struct {
 
 // addressStateList 도/특별시 리스트 응답 구조체
 type addressStateListResponse struct {
+	util.CacheHeader
 	Body struct {
 		Data []*domain.AddressState `json:"data" doc:"도/특별시 주소 정보 JSON 배열 입니다."`
 	}
@@ -31,24 +35,28 @@ type addressStateListResponse struct {
 
 // addressCityList 시/군/구 응답 구조체
 type addressCityListResponse struct {
+	util.CacheHeader
 	Body struct {
 		Data []*domain.AddressCity `json:"data" doc:"시/군/구 주소 정보 JSON 배열 입니다."`
 	}
 }
 
 type cropListResponse struct {
+	util.CacheHeader
 	Body struct {
 		Data []*domain.Crop `json:"data" doc:"작물 정보 JSON 배열 입니다."`
 	}
 }
 
 type cropResponse struct {
+	util.CacheHeader
 	Body struct {
 		Data *domain.Crop `json:"data" doc:"작물 정보 JSON 입니다."`
 	}
 }
 
 type updateCycleListResponse struct {
+	util.CacheHeader
 	Body struct {
 		Data []*domain.UpdateCycle `json:"data" doc:"업데이트 주기 정보 JSON 배열 입니다."`
 	}
@@ -75,6 +83,12 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		}
 
 		resp.Body.Data = sensorList
+
+		cacheHeader := util.CacheHeaderBuilder{
+			CacheType: util.CacheTypePublic,
+			TTL:       60,
+		}
+		resp.CacheControl = cacheHeader.String()
 
 		return &resp, nil
 	})
@@ -106,6 +120,12 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 
 		resp.Body.Data = sensor
 
+		cacheHeader := util.CacheHeaderBuilder{
+			CacheType: util.CacheTypePublic,
+			TTL:       60,
+		}
+		resp.CacheControl = cacheHeader.String()
+
 		return &resp, nil
 	})
 
@@ -127,6 +147,12 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		}
 
 		resp.Body.Data = addressStateList
+
+		cacheHeader := util.CacheHeaderBuilder{
+			CacheType: util.CacheTypePublic,
+			TTL:       1800,
+		}
+		resp.CacheControl = cacheHeader.String()
 
 		return &resp, nil
 	})
@@ -161,6 +187,12 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 
 		resp.Body.Data = addressCityList
 
+		cacheHeader := util.CacheHeaderBuilder{
+			CacheType: util.CacheTypePublic,
+			TTL:       1800,
+		}
+		resp.CacheControl = cacheHeader.String()
+
 		return &resp, nil
 	})
 
@@ -182,6 +214,12 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		}
 
 		resp.Body.Data = cropList
+
+		cacheHeader := util.CacheHeaderBuilder{
+			CacheType: util.CacheTypePublic,
+			TTL:       60,
+		}
+		resp.CacheControl = cacheHeader.String()
 
 		return &resp, nil
 	})
@@ -207,6 +245,12 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 
 		resp.Body.Data = crop
 
+		cacheHeader := util.CacheHeaderBuilder{
+			CacheType: util.CacheTypePublic,
+			TTL:       60,
+		}
+		resp.CacheControl = cacheHeader.String()
+
 		return &resp, nil
 	})
 
@@ -228,6 +272,12 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		}
 
 		resp.Body.Data = updateCycleList
+
+		cacheHeader := util.CacheHeaderBuilder{
+			CacheType: util.CacheTypePublic,
+			TTL:       1800,
+		}
+		resp.CacheControl = cacheHeader.String()
 
 		return &resp, nil
 	})
