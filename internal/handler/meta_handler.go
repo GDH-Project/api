@@ -13,26 +13,38 @@ import (
 
 type sensorListResponse struct {
 	Body struct {
-		Data []*domain.Sensor `json:"data" doc:"센서 정보를 답은 JSON 배열 입니다."`
+		Data []*domain.Sensor `json:"data" doc:"센서 정보 JSON 배열 입니다."`
 	}
 }
 type sensorResponse struct {
 	Body struct {
-		Data *domain.Sensor `json:"data" doc:"센서 데이터 JSON 입니다."`
+		Data *domain.Sensor `json:"data" doc:"센서 정보 JSON 입니다."`
 	}
 }
 
 // addressStateList 도/특별시 리스트 응답 구조체
 type addressStateListResponse struct {
 	Body struct {
-		Data []*domain.AddressState
+		Data []*domain.AddressState `json:"data" doc:"도/특별시 주소 정보 JSON 배열 입니다."`
 	}
 }
 
 // addressCityList 시/군/구 응답 구조체
 type addressCityListResponse struct {
 	Body struct {
-		Data []*domain.AddressCity
+		Data []*domain.AddressCity `json:"data" doc:"시/군/구 주소 정보 JSON 배열 입니다."`
+	}
+}
+
+type cropListResponse struct {
+	Body struct {
+		Data []*domain.Crop `json:"data" doc:"작물 정보 JSON 배열 입니다."`
+	}
+}
+
+type cropResponse struct {
+	Body struct {
+		Data *domain.Crop `json:"data" doc:"작물 정보 JSON 입니다."`
 	}
 }
 
@@ -128,18 +140,66 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		var resp addressCityListResponse
 		addressCityList, err := metaUseCase.GetAddressCityListByState(ctx, i.State)
 		if err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				log.Info("meta.h.v1MetaGetAddressCityByStateID 데이터 조회 실패",
-					zap.String("state", i.State),
-					zap.Error(err),
-				)
-				return nil, huma.Error400BadRequest("state에 해당하는 데이터가 존재하지 않습니다.")
-			}
 			log.Error("meta.h.v1MetaGetAddressCityByStateID 오류", zap.Error(err))
 			return nil, huma.Error500InternalServerError("주소 데이터를 불러오는 도중 오류가 발생했습니다.")
 		}
 
+		// 값이 존재하지 않는 경우
+		if len(addressCityList) == 0 {
+			log.Info("meta.h.v1MetaGetAddressCityByStateID 데이터 조회 실패",
+				zap.String("state", i.State),
+				zap.Error(err),
+			)
+			return nil, huma.Error400BadRequest("state에 해당하는 데이터가 존재하지 않습니다.")
+		}
+
 		resp.Body.Data = addressCityList
+
+		return &resp, nil
+	})
+
+	// 전체 작물 조회
+	huma.Register(v1, huma.Operation{
+		OperationID:   "v1MetaGetCropList",
+		Method:        http.MethodGet,
+		Path:          "/meta/crops",
+		Summary:       "전체 작물 조회",
+		Description:   "전체 작물 조회 API 입니다.",
+		Tags:          []string{"Meta"},
+		DefaultStatus: http.StatusOK,
+	}, func(ctx context.Context, i *struct{}) (*cropListResponse, error) {
+		var resp cropListResponse
+		cropList, err := metaUseCase.GetCropList(ctx)
+		if err != nil {
+			log.Error("meta.h.v1MetaGetCropList 오류", zap.Error(err))
+			return nil, huma.Error500InternalServerError("전체 작물 데이터를 불러오는 도중 오류가 발생했습니다.")
+		}
+
+		resp.Body.Data = cropList
+
+		return &resp, nil
+	})
+
+	// 작물 조회 By 작물명
+	huma.Register(v1, huma.Operation{
+		OperationID:   "v1MetaGetCropByTitle",
+		Method:        http.MethodGet,
+		Path:          "/meta/crop/{title}",
+		Summary:       "작물 조회 By 작물명",
+		Description:   "작물 조회 By 작물명 API 입니다.",
+		Tags:          []string{"Meta"},
+		DefaultStatus: http.StatusOK,
+	}, func(ctx context.Context, i *struct {
+		Title string `path:"title" doc:"작물 명칭 입니다." example:"토마토"`
+	}) (*cropResponse, error) {
+		var resp cropResponse
+		crop, err := metaUseCase.GetCropByParam(ctx, &domain.Crop{Title: i.Title})
+		if err != nil {
+			log.Error("meta.h.v1MetaGetCropList 오류", zap.Error(err))
+			return nil, huma.Error500InternalServerError("전체 작물 데이터를 불러오는 도중 오류가 발생했습니다.")
+		}
+
+		resp.Body.Data = crop
 
 		return &resp, nil
 	})

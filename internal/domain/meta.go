@@ -85,9 +85,9 @@ type Sensor struct {
 //
 // 작물 정보 입니다.
 type Crop struct {
-	ID    int
+	ID    int     `json:"-"`
 	Title string  `json:"title" doc:"작물명" example:"토마토"`
-	Desc  *string `json:"desc,omitempty" doc:"작물의 설명"`
+	Desc  *string `json:"desc,omitempty" doc:"작물의 설명" example:"토마토에 대한 설명입니다."`
 }
 
 // UpdateCycle
