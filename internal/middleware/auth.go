@@ -44,9 +44,8 @@ func (m *middleware) authMiddleware(ctx huma.Context, next func(huma.Context)) {
 		return
 
 	}
-
-	ctx = huma.WithValue(ctx, CTX_USER_ID, user.ID)
-	ctx = huma.WithValue(ctx, CTX_USER_ROLE, user.Role)
+	ctx = huma.WithValue(ctx, CTX_USER_ID, string(user.ID))
+	ctx = huma.WithValue(ctx, CTX_USER_ROLE, string(user.Role))
 
 	next(ctx)
 }

@@ -18,11 +18,11 @@ type ValidateUser struct {
 }
 
 func (c *ValidateUser) getValue(key string) string {
-	v := c.Ctx.Value(key)
-	if v == nil {
+	v, ok := c.Ctx.Value(key).(string)
+	if !ok {
 		return ""
 	}
-	return v.(string)
+	return v
 }
 
 // UserID ctx에서 추출한 UserID 이다. 만약 ctx에 설전정 UserID가 없을 경우 공백 문자를 반환한다.
