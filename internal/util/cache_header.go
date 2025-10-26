@@ -20,8 +20,9 @@ type CacheHeader struct {
 //
 // "cache-control" 헤더에 삽입되는 데이터 구조체 입니다.
 type CacheHeaderBuilder struct {
-	CacheType CacheType // 캐시 시간
-	TTL       int       // TTL
+	CacheType            CacheType // 캐시 시간
+	TTL                  int       // TTL
+	StaleWhileRevalidate int       // 캐시 만료후 갱신전 유효하다고 판단할 시간
 }
 
 // String
@@ -38,6 +39,13 @@ func (c *CacheHeaderBuilder) String() string {
 	b.WriteString(string(c.CacheType))
 	b.WriteString(", ")
 	b.WriteString(maxAgeStr)
+
+	// 캐시 만료후 유휴 시간 헤더 추가
+	if c.StaleWhileRevalidate > 0 && c.StaleWhileRevalidate > c.TTL {
+		b.WriteString(
+			fmt.Sprintf(", stale-while-revalidate=%d", c.StaleWhileRevalidate),
+		)
+	}
 
 	return b.String()
 }

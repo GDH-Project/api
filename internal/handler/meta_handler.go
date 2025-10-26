@@ -64,6 +64,11 @@ type updateCycleListResponse struct {
 
 func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaUseCase) {
 	v1 := huma.NewGroup(api, "/api/v1")
+	cacheHeader := util.CacheHeaderBuilder{
+		CacheType:            util.CacheTypePublic,
+		TTL:                  60,
+		StaleWhileRevalidate: 604800,
+	}
 
 	// 센서 정보 전체 조회 API
 	huma.Register(v1, huma.Operation{
@@ -83,11 +88,6 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		}
 
 		resp.Body.Data = sensorList
-
-		cacheHeader := util.CacheHeaderBuilder{
-			CacheType: util.CacheTypePublic,
-			TTL:       60,
-		}
 		resp.CacheControl = cacheHeader.String()
 
 		return &resp, nil
@@ -119,11 +119,6 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		}
 
 		resp.Body.Data = sensor
-
-		cacheHeader := util.CacheHeaderBuilder{
-			CacheType: util.CacheTypePublic,
-			TTL:       60,
-		}
 		resp.CacheControl = cacheHeader.String()
 
 		return &resp, nil
@@ -147,11 +142,6 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		}
 
 		resp.Body.Data = addressStateList
-
-		cacheHeader := util.CacheHeaderBuilder{
-			CacheType: util.CacheTypePublic,
-			TTL:       1800,
-		}
 		resp.CacheControl = cacheHeader.String()
 
 		return &resp, nil
@@ -186,11 +176,6 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		}
 
 		resp.Body.Data = addressCityList
-
-		cacheHeader := util.CacheHeaderBuilder{
-			CacheType: util.CacheTypePublic,
-			TTL:       1800,
-		}
 		resp.CacheControl = cacheHeader.String()
 
 		return &resp, nil
@@ -214,11 +199,6 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		}
 
 		resp.Body.Data = cropList
-
-		cacheHeader := util.CacheHeaderBuilder{
-			CacheType: util.CacheTypePublic,
-			TTL:       60,
-		}
 		resp.CacheControl = cacheHeader.String()
 
 		return &resp, nil
@@ -244,11 +224,6 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		}
 
 		resp.Body.Data = crop
-
-		cacheHeader := util.CacheHeaderBuilder{
-			CacheType: util.CacheTypePublic,
-			TTL:       60,
-		}
 		resp.CacheControl = cacheHeader.String()
 
 		return &resp, nil
@@ -272,11 +247,6 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 		}
 
 		resp.Body.Data = updateCycleList
-
-		cacheHeader := util.CacheHeaderBuilder{
-			CacheType: util.CacheTypePublic,
-			TTL:       1800,
-		}
 		resp.CacheControl = cacheHeader.String()
 
 		return &resp, nil
