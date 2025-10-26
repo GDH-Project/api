@@ -10,6 +10,8 @@ const (
 	UserRoleAdmin  UserRole = "admin"
 	UserRoleUser   UserRole = "user"
 	UserRoleDevice UserRole = "device"
+	CTX_USER_ROLE  string   = "user_role"
+	CTX_USER_ID    string   = "user_id"
 )
 
 type User struct {

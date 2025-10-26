@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/GDH-Project/api/internal/domain"
-	"github.com/GDH-Project/api/internal/middleware"
 )
 
 // ValidateUser 유저 권한 검사
@@ -28,12 +27,12 @@ func (c *ValidateUser) getValue(key string) string {
 
 // UserID ctx에서 추출한 UserID 이다. 만약 ctx에 설전정 UserID가 없을 경우 공백 문자를 반환한다.
 func (c *ValidateUser) UserID() string {
-	return c.getValue(middleware.CTX_USER_ID)
+	return c.getValue(domain.CTX_USER_ID)
 }
 
 // UserRole ctx에서 추출한 UserRole 이다. 만약 ctx에 설정된 UserRole이 없을 경우 공백 문자를 반환한다.
 func (c *ValidateUser) UserRole() string {
-	return c.getValue(middleware.CTX_USER_ROLE)
+	return c.getValue(domain.CTX_USER_ROLE)
 }
 
 // Exec 권한 평가 실행한 후 불리언을 반환한다.
