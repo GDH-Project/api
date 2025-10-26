@@ -256,12 +256,6 @@ func (r *deviceRepository) GetDeviceInfoListByParamAndPage(ctx context.Context, 
 		return nil, nil, err
 	}
 
-	r.log.Info("총 레코드 수",
-		zap.Int("count", count),
-		zap.Int("pageSize", page.Size),
-		zap.Float64("계산된 값", float64(count)/float64(page.Size)),
-	)
-
 	q = `
 			SELECT 
 			    info.user_id,
