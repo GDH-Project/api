@@ -8,7 +8,7 @@ import (
 )
 
 type Middleware interface {
-	WithAuth(op huma.Operation) huma.Operation
+	WithAuth(op huma.Operation, passRole ...domain.UserRole) huma.Operation
 	WithGrpcMeta() gin.HandlerFunc
 }
 
