@@ -25,6 +25,7 @@ type DeviceRepository interface {
 	GetDeviceRequestSchemaListByDeviceID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
 	GetDeviceRequestSchemaByID(ctx context.Context, id int) (*DeviceRequestSchema, error)
 	UpdateDeviceRequestSchema(ctx context.Context, in *RawDeviceRequestSchema) error
+	DeleteDeviceRequestSchemaByID(ctx context.Context, id int) error
 }
 
 // DeviceData

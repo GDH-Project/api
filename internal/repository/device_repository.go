@@ -17,6 +17,17 @@ type deviceRepository struct {
 	db  *pgxpool.Pool
 }
 
+func (r *deviceRepository) DeleteDeviceRequestSchemaByID(ctx context.Context, id int) error {
+	var successID int
+	q := `DELETE FROM device.req_to_sensor WHERE id = $1 RETURNING id;`
+	if err := r.db.QueryRow(ctx, q, id).Scan(&successID); err != nil {
+		r.log.Info("device.r.DeleteDeviceRequestSchemaByID() 오류", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
 func (r *deviceRepository) UpdateDeviceRequestSchema(ctx context.Context, in *domain.RawDeviceRequestSchema) error {
 	var successID int
 	q := `
@@ -26,7 +37,7 @@ func (r *deviceRepository) UpdateDeviceRequestSchema(ctx context.Context, in *do
 			    sensor_id = COALESCE(NULLIF($3,0), sensor_id)
 			WHERE 
 			    id = $1
-			RETURNING id
+			RETURNING id;
 		`
 	if err := r.db.QueryRow(ctx, q,
 		in.ID,
