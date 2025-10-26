@@ -15,6 +15,30 @@ type deviceUseCase struct {
 	metaSvc   domain.MetaService
 }
 
+func (uc *deviceUseCase) GetDeviceInfoListByParamAndPage(ctx context.Context, in *domain.DeviceInfo, page *domain.Page) ([]*domain.DeviceInfo, *domain.Page, error) {
+	// 사용자 권한 체크
+	validate := util.ValidateUser{
+		Ctx:        ctx,
+		TargetRole: domain.UserRoleDevice,
+	}
+	if !validate.Exec() {
+		err := errors.New("권한이 존재하지 않습니다")
+		uc.log.Info("device.uc.CreateDeviceInfo() 오류 - 권한이 존재하지 않습니다.", zap.Error(err))
+		return nil, nil, err
+	}
+
+	// 유저 아이디 삽입
+	in.UserID = validate.UserID()
+
+	dataList, page, err := uc.deviceSvc.GetDeviceInfoListByParamAndPage(ctx, in, page)
+	if err != nil {
+		uc.log.Info("device.uc.GetDeviceInfoListByParamAndPage()", zap.Error(err))
+		return nil, nil, errors.New("장비 조회 실패")
+	}
+
+	return dataList, page, nil
+}
+
 func (uc *deviceUseCase) CreateDevice(ctx context.Context, deviceInfoData *domain.DeviceInfo, deviceSchemaDataList []*domain.DeviceRequestSchema) error {
 	// 사용자 권한 체크
 	validateUser := util.ValidateUser{
@@ -33,7 +57,7 @@ func (uc *deviceUseCase) CreateDevice(ctx context.Context, deviceInfoData *domai
 
 	rawDeviceInfo.UserID = validateUser.UserID()
 	rawDeviceInfo.Title = deviceInfoData.Title
-	rawDeviceInfo.Name = deviceInfoData.Name
+	rawDeviceInfo.Name = *deviceInfoData.Name
 
 	// 작물 정보 ID
 	cropData, err := uc.metaSvc.GetCropByParam(ctx, &domain.Crop{Title: deviceInfoData.Crop})

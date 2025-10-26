@@ -14,6 +14,10 @@ type deviceService struct {
 	meta   domain.MetaRepository
 }
 
+func (svc *deviceService) GetDeviceInfoListByParamAndPage(ctx context.Context, in *domain.DeviceInfo, page *domain.Page) ([]*domain.DeviceInfo, *domain.Page, error) {
+	return svc.device.GetDeviceInfoListByParamAndPage(ctx, in, page)
+}
+
 func (svc *deviceService) CreateDevice(ctx context.Context, deviceInfoData *domain.RawDeviceInfo, deviceSchemaDataList []*domain.RawDeviceRequestSchema) error {
 	// 장비 생성 트랜잭션 시작
 	err := svc.device.WithTransaction(ctx, func(tx pgx.Tx) error {

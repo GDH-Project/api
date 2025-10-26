@@ -6,10 +6,23 @@ import (
 
 	"github.com/GDH-Project/api/internal/domain"
 	"github.com/GDH-Project/api/internal/middleware"
-	"github.com/GDH-Project/api/internal/util"
 	"github.com/danielgtaylor/huma/v2"
 	"go.uber.org/zap"
 )
+
+type pageInfo struct {
+	Size        int  `json:"size" doc:"현재 페이지 크기 입니다." example:"10"`
+	Page        int  `json:"page" doc:"현재 페이지 입니다." example:"1"`
+	NextPage    int  `json:"next_page,omitempty" doc:"다음 페이지 번호 입니다." example:"2"`
+	RecordCount int  `json:"record_count" doc:"총 데이터 수 입니다." example:"20"`
+	HasNextPage bool `json:"has_next_page" doc:"다음 페이지 존재 여부 입니다." example:"true"`
+}
+type deviceInfoListResponse struct {
+	Body struct {
+		Data     []*domain.DeviceInfo `json:"data" doc:"장비 정보 배열 입니다."`
+		PageInfo pageInfo             `json:"page_info" doc:"페이지 정보 입니다."`
+	}
+}
 
 func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.DeviceUseCase, m middleware.Middleware) {
 	v1 := huma.NewGroup(api, "/api/v1")
@@ -46,7 +59,7 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		// 파라미터 변환
 		var deviceInfo domain.DeviceInfo
 		deviceInfo.Title = i.Body.Title
-		deviceInfo.Name = i.Body.Name
+		deviceInfo.Name = &i.Body.Name
 		deviceInfo.Crop = i.Body.Crop
 		deviceInfo.UpdateCycle = i.Body.UpdateCycle
 		deviceInfo.Address.State = i.Body.Address.State
@@ -66,6 +79,61 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		}
 
 		return nil, nil
+	})
+
+	// 나의 장비 리스트 조회 API
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceGetMyDeviceInfoList",
+			Method:        http.MethodGet,
+			Path:          "/devices",
+			Summary:       "나의 장치 정보 리스트 조회",
+			Description:   "나의 장치 정보 리스트 조회 API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusOK,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		Size     int    `query:"size" doc:"조회할 페이지 크기 입니다." default:"10"`
+		Page     int    `query:"page" doc:"조회할 페이지 입니다." default:"1"`
+		Title    string `query:"title" doc:"title 명칭 입니다." example:"스마트"`
+		Crop     string `query:"crop" doc:"작물명입니다." example:"토마토"`
+		Interval int    `query:"interval" doc:"데이터 갱신 주기 입니다." example:"10"`
+		State    string `query:"state" doc:"도/특별시 명칭 입니다." example:"경기도"`
+		City     string `query:"city" doc:"시/군/구 명칭 입니다." example:"안양시"`
+	}) (*deviceInfoListResponse, error) {
+		var resp deviceInfoListResponse
+
+		var param domain.DeviceInfo
+		param.Title = i.Title
+		param.Crop = i.Crop
+		param.UpdateCycle = i.Interval
+		param.Address.State = i.State
+		param.Address.City = i.City
+
+		var p domain.Page
+		p.Size = i.Size
+		p.Page = i.Page
+		dataList, page, err := deviceUseCase.GetDeviceInfoListByParamAndPage(ctx, &param, &p)
+		if err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		resp.Body.Data = dataList
+
+		pageInfo := pageInfo{
+			Size:        page.Size,
+			Page:        page.Page,
+			RecordCount: page.RecordCount,
+		}
+		if page.HasNext() {
+			pageInfo.NextPage = page.Page + 1
+			pageInfo.HasNextPage = true
+		}
+
+		resp.Body.PageInfo = pageInfo
+
+		return &resp, nil
 	})
 
 }
