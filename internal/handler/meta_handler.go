@@ -66,7 +66,7 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 	v1 := huma.NewGroup(api, "/api/v1")
 	cacheHeader := util.CacheHeaderBuilder{
 		CacheType:            util.CacheTypePublic,
-		TTL:                  60,
+		TTL:                  0,
 		StaleWhileRevalidate: 604800,
 	}
 
