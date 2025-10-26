@@ -9,6 +9,11 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	CTX_USER_ROLE = "user_role"
+	CTX_USER_ID   = "user_id"
+)
+
 // WithAuth
 //
 // 인증 미들 웨어 입니다.
@@ -40,8 +45,8 @@ func (m *middleware) authMiddleware(ctx huma.Context, next func(huma.Context)) {
 
 	}
 
-	ctx = huma.WithValue(ctx, "user_id", user.ID)
-	ctx = huma.WithValue(ctx, "user_role", user.Role)
+	ctx = huma.WithValue(ctx, CTX_USER_ID, user.ID)
+	ctx = huma.WithValue(ctx, CTX_USER_ROLE, user.Role)
 
 	next(ctx)
 }
