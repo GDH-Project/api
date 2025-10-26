@@ -19,8 +19,14 @@ type pageInfo struct {
 }
 type deviceInfoListResponse struct {
 	Body struct {
-		Data     []*domain.DeviceInfo `json:"data" doc:"장비 정보 배열 입니다."`
+		Data     []*domain.DeviceInfo `json:"data" doc:"장비 정보 JSON 배열 입니다."`
 		PageInfo pageInfo             `json:"page_info" doc:"페이지 정보 입니다."`
+	}
+}
+
+type deviceInfoResponse struct {
+	Body struct {
+		Data *domain.DeviceInfo `json:"data" doc:"장비 정보 JSON 입니다."`
 	}
 }
 
@@ -134,6 +140,33 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		resp.Body.PageInfo = pageInfo
 
 		return &resp, nil
+	})
+
+	// 장비 정보 조회 By ID
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceGetMyDeviceInfoByID",
+			Method:        http.MethodGet,
+			Path:          "/device/{id}",
+			Summary:       "나의 장치 정보 조회 By ID",
+			Description:   "나의 장치 정보 조회 By ID API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusOK,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"id" doc:"장비 정보 고유 ID 입니다." format:"uuid"`
+	}) (*deviceInfoResponse, error) {
+		var resp deviceInfoResponse
+		data, err := deviceUseCase.GetDeviceInfoByID(ctx, i.DeviceID)
+		if err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		resp.Body.Data = data
+
+		return &resp, nil
+
 	})
 
 }

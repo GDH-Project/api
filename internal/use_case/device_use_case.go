@@ -15,6 +15,25 @@ type deviceUseCase struct {
 	metaSvc   domain.MetaService
 }
 
+func (uc *deviceUseCase) GetDeviceInfoByID(ctx context.Context, id string) (*domain.DeviceInfo, error) {
+	validate := util.ValidateUser{
+		Ctx:        ctx,
+		TargetRole: domain.UserRoleDevice,
+	}
+	if !validate.Exec() {
+		err := errors.New("권한이 존재하지 않습니다")
+		uc.log.Info("device.uc.GetDeviceInfoByID() 오류 - 권한이 존재하지 않습니다.", zap.Error(err))
+		return nil, err
+	}
+
+	data, err := uc.deviceSvc.GetDeviceInfoByID(ctx, id, validate.UserID())
+	if err != nil {
+		return nil, errors.New("id를 확인해주세요")
+	}
+
+	return data, nil
+}
+
 func (uc *deviceUseCase) GetDeviceInfoListByParamAndPage(ctx context.Context, in *domain.DeviceInfo, page *domain.Page) ([]*domain.DeviceInfo, *domain.Page, error) {
 	// 사용자 권한 체크
 	validate := util.ValidateUser{

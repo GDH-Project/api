@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/GDH-Project/api/internal/domain"
 	"github.com/jackc/pgx/v5"
@@ -12,6 +13,24 @@ type deviceService struct {
 	log    *zap.Logger
 	device domain.DeviceRepository
 	meta   domain.MetaRepository
+}
+
+func (svc *deviceService) GetDeviceInfoByID(ctx context.Context, id string, userID string) (*domain.DeviceInfo, error) {
+	data, err := svc.device.GetDeviceInfoByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if data.UserID != userID {
+		err := errors.New("접근 권한이 없습니다")
+		svc.log.Warn("device.svc.GetDeviceInfoByID() 권한이 없는 유저가 조회를 시도했습니다.",
+			zap.String("user_id", userID),
+			zap.String("id", id),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func (svc *deviceService) GetDeviceInfoListByParamAndPage(ctx context.Context, in *domain.DeviceInfo, page *domain.Page) ([]*domain.DeviceInfo, *domain.Page, error) {
