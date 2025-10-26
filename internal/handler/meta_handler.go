@@ -65,9 +65,9 @@ type updateCycleListResponse struct {
 func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaUseCase) {
 	v1 := huma.NewGroup(api, "/api/v1")
 	cacheHeader := util.CacheHeaderBuilder{
-		CacheType:             util.CacheTypePublic,
-		TTL:                   60,
-		StableWhileRevalidate: 604800,
+		CacheType:            util.CacheTypePublic,
+		TTL:                  60,
+		StaleWhileRevalidate: 604800,
 	}
 
 	// 센서 정보 전체 조회 API
