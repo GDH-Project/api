@@ -18,14 +18,14 @@ func (r *metaRepository) GetAddressIDByStateTitleAndCityTitle(ctx context.Contex
 	var addressData domain.RawAddressData
 
 	q := `
-			SELECT c.id, c.address_state_id, c.title FROM device.address_city c
+			SELECT c.id, c.address_state_id FROM device.address_city c
 			JOIN device.address_state s ON s.id = c.address_state_id
 			WHERE s.title = $1 
 			  AND c.title = $2;
 		`
 	if err := r.db.QueryRow(ctx, q, in.StateTitle, in.Title).Scan(
-		&addressData.StateID,
 		&addressData.CityID,
+		&addressData.StateID,
 	); err != nil {
 		r.log.Error("r.device.GetAddressIDByStateTitleAndCityTitle() 오류", zap.Error(err))
 		return nil, err

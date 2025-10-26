@@ -47,6 +47,7 @@ type MetaService interface {
 	GetAddressStateList(ctx context.Context) ([]*AddressState, error)
 	// GetAddressCityListByState 도/특별시 정보를 통해 시/군/구 리스트 반환
 	GetAddressCityListByState(ctx context.Context, state string) ([]*AddressCity, error)
+	GetAddressIDByStateTitleAndCityTitle(ctx context.Context, in *AddressCity) (*RawAddressData, error)
 }
 
 type MetaUseCase interface {
