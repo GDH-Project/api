@@ -15,15 +15,18 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 	v1 := huma.NewGroup(api, "/api/v1")
 
 	// 장비 생성 API
-	huma.Register(v1, m.WithAuth(huma.Operation{
-		OperationID:   "v1DeviceCreateDeviceInfoWithSchema",
-		Method:        http.MethodPost,
-		Path:          "/device",
-		Summary:       "장치 생성",
-		Description:   "장치 생성 API 입니다. 장치 데이터와 스키마 데이터를 받아 새로운 장치를 생성합니다. 스키마 데이터는 생략 가능합니다.",
-		Tags:          []string{"Device"},
-		DefaultStatus: http.StatusCreated,
-	}), func(ctx context.Context, i *struct {
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceCreateDeviceInfoWithSchema",
+			Method:        http.MethodPost,
+			Path:          "/device",
+			Summary:       "장치 생성",
+			Description:   "장치 생성 API 입니다. 장치 데이터와 스키마 데이터를 받아 새로운 장치를 생성합니다. 스키마 데이터는 생략 가능합니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusCreated,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
 		Body struct {
 			Title       string `json:"title" minLength:"5" doc:"장치의 이름 입니다. 검색 시 노출되는 이름 입니다." example:"경기도 안양시 토마토 스마트팜"`
 			Name        string `json:"name,omitempty" doc:"장치 등록자만 확인 가능한 값입니다. 개인의 장치 식별에 사용하면 됩니다." example:"A-B1 섹터 3구역"`
@@ -39,14 +42,6 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 			} `json:"schema,omitempty" doc:"장비의 요청과 센서 값을 바인딩 하는 스키마 입니다."`
 		}
 	}) (*struct{}, error) {
-		// 권한 체크
-		validate := util.ValidateUser{
-			Ctx:        ctx,
-			TargetRole: domain.UserRoleDevice,
-		}
-		if !validate.Exec() {
-			return nil, huma.Error403Forbidden("권한이 없습니다.")
-		}
 
 		// 파라미터 변환
 		var deviceInfo domain.DeviceInfo
