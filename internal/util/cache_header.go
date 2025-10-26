@@ -43,7 +43,7 @@ func (c *CacheHeaderBuilder) String() string {
 	// 캐시 만료후 유휴 시간 헤더 추가
 	if c.StableWhileRevalidate > 0 && c.StableWhileRevalidate > c.TTL {
 		b.WriteString(
-			fmt.Sprintf(", stale-while-revalidate=%s", c.StableWhileRevalidate),
+			fmt.Sprintf(", stale-while-revalidate=%d", c.StableWhileRevalidate),
 		)
 	}
 
