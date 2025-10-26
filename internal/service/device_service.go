@@ -33,7 +33,7 @@ func (svc *deviceService) CreateDevice(ctx context.Context, deviceInfoData *doma
 		// 스키마 데이터가 존재하는 경우
 		// DB에 스키마 삽입
 		if err := svc.device.CreateDeviceReqeustSchemaListTx(ctx, tx, deviceID, deviceSchemaDataList); err != nil {
-			svc.log.Error("device.svc.CreateDeviceInfo() 오류 - 스키마를 생성할 수 없습니다.", zap.Error(err))
+			svc.log.Info("device.svc.CreateDeviceInfo() 오류 - 스키마를 생성할 수 없습니다.", zap.Error(err))
 			return err
 		}
 
@@ -42,7 +42,7 @@ func (svc *deviceService) CreateDevice(ctx context.Context, deviceInfoData *doma
 	// 장비 생성 트랜잭션 종료
 
 	if err != nil {
-		svc.log.Error("device.svc.CreateDeviceInfo() 오류 - 트랜잭션 도중 오류가 발생했습니다..", zap.Error(err))
+		svc.log.Info("device.svc.CreateDeviceInfo() 오류 - 트랜잭션 도중 오류가 발생했습니다..", zap.Error(err))
 		return err
 	}
 

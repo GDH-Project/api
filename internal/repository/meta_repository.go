@@ -27,7 +27,7 @@ func (r *metaRepository) GetAddressIDByStateTitleAndCityTitle(ctx context.Contex
 		&addressData.CityID,
 		&addressData.StateID,
 	); err != nil {
-		r.log.Error("r.device.GetAddressIDByStateTitleAndCityTitle() 오류", zap.Error(err))
+		r.log.Info("r.device.GetAddressIDByStateTitleAndCityTitle() 오류", zap.Error(err))
 		return nil, err
 	}
 
@@ -55,7 +55,7 @@ func (r *metaRepository) GetSensorList(ctx context.Context) ([]*domain.Sensor, e
 			&s.Unit,
 			&s.UnitDesc,
 		); err != nil {
-			r.log.Error("device.r.GetSensorList() 오류", zap.Error(err))
+			r.log.Info("device.r.GetSensorList() 오류", zap.Error(err))
 			return nil, err
 		}
 
@@ -63,7 +63,7 @@ func (r *metaRepository) GetSensorList(ctx context.Context) ([]*domain.Sensor, e
 	}
 
 	if err = rows.Err(); err != nil {
-		r.log.Error("device.r.GetSensorList() 오류", zap.Error(err))
+		r.log.Info("device.r.GetSensorList() 오류", zap.Error(err))
 		return nil, err
 	}
 
@@ -73,7 +73,7 @@ func (r *metaRepository) GetSensorList(ctx context.Context) ([]*domain.Sensor, e
 func (r *metaRepository) GetSensorByParam(ctx context.Context, in *domain.Sensor) (*domain.Sensor, error) {
 
 	if in.ID == 0 && in.Title == "" {
-		r.log.Error("ID 혹은 Title은 필수 입니다")
+		r.log.Info("ID 혹은 Title은 필수 입니다")
 		return nil, errors.New("ID 혹은 Title은 필수 입니다")
 	}
 	var sensor domain.Sensor
@@ -95,7 +95,7 @@ func (r *metaRepository) GetSensorByParam(ctx context.Context, in *domain.Sensor
 		&sensor.Unit,
 		&sensor.UnitDesc,
 	); err != nil {
-		r.log.Error("device.r.GetSensorByParam() 오류", zap.Error(err))
+		r.log.Info("device.r.GetSensorByParam() 오류", zap.Error(err))
 		return nil, err
 	}
 
@@ -108,7 +108,7 @@ func (r *metaRepository) GetCropList(ctx context.Context) ([]*domain.Crop, error
 	q := `SELECT id, title, description FROM device.crop`
 	rows, err := r.db.Query(ctx, q)
 	if err != nil {
-		r.log.Error("device.r.GetCropList() 오류", zap.Error(err))
+		r.log.Info("device.r.GetCropList() 오류", zap.Error(err))
 		return nil, err
 	}
 	defer rows.Close()
@@ -120,7 +120,7 @@ func (r *metaRepository) GetCropList(ctx context.Context) ([]*domain.Crop, error
 			&crop.Title,
 			&crop.Desc,
 		); err != nil {
-			r.log.Error("device.r.GetCropList() 오류", zap.Error(err))
+			r.log.Info("device.r.GetCropList() 오류", zap.Error(err))
 			return nil, err
 		}
 
@@ -128,7 +128,7 @@ func (r *metaRepository) GetCropList(ctx context.Context) ([]*domain.Crop, error
 	}
 
 	if err := rows.Err(); err != nil {
-		r.log.Error("device.r.GetCropList() 오류", zap.Error(err))
+		r.log.Info("device.r.GetCropList() 오류", zap.Error(err))
 		return nil, err
 	}
 
@@ -152,7 +152,7 @@ func (r *metaRepository) GetCropByParam(ctx context.Context, in *domain.Crop) (*
 		&crop.Title,
 		&crop.Desc,
 	); err != nil {
-		r.log.Error("device.r.GetCropByParam() 오류", zap.Error(err))
+		r.log.Info("device.r.GetCropByParam() 오류", zap.Error(err))
 		return nil, err
 	}
 
@@ -164,7 +164,7 @@ func (r *metaRepository) GetUpdateCycleList(ctx context.Context) ([]*domain.Upda
 	q := `SELECT id, interval, description FROM device.update_cycle`
 	rows, err := r.db.Query(ctx, q)
 	if err != nil {
-		r.log.Error("device.r.GetUpdateCycleList() 오류", zap.Error(err))
+		r.log.Info("device.r.GetUpdateCycleList() 오류", zap.Error(err))
 		return nil, err
 	}
 	defer rows.Close()
@@ -176,7 +176,7 @@ func (r *metaRepository) GetUpdateCycleList(ctx context.Context) ([]*domain.Upda
 			&updateCycle.Interval,
 			&updateCycle.Desc,
 		); err != nil {
-			r.log.Error("device.r.GetUpdateCycleList() 오류", zap.Error(err))
+			r.log.Info("device.r.GetUpdateCycleList() 오류", zap.Error(err))
 			return nil, err
 		}
 
@@ -184,7 +184,7 @@ func (r *metaRepository) GetUpdateCycleList(ctx context.Context) ([]*domain.Upda
 	}
 
 	if err := rows.Err(); err != nil {
-		r.log.Error("device.r.GetUpdateCycleList() 오류", zap.Error(err))
+		r.log.Info("device.r.GetUpdateCycleList() 오류", zap.Error(err))
 		return nil, err
 	}
 
@@ -196,7 +196,7 @@ func (r *metaRepository) GetAddressStateList(ctx context.Context) ([]*domain.Add
 	q := `SELECT id,title FROM device.address_state`
 	rows, err := r.db.Query(ctx, q)
 	if err != nil {
-		r.log.Error("device.r.GetAddressStateList() 오류", zap.Error(err))
+		r.log.Info("device.r.GetAddressStateList() 오류", zap.Error(err))
 		return nil, err
 	}
 	defer rows.Close()
@@ -207,14 +207,14 @@ func (r *metaRepository) GetAddressStateList(ctx context.Context) ([]*domain.Add
 			&addressState.ID,
 			&addressState.Title,
 		); err != nil {
-			r.log.Error("device.r.GetAddressStateList() 오류", zap.Error(err))
+			r.log.Info("device.r.GetAddressStateList() 오류", zap.Error(err))
 			return nil, err
 		}
 		addressStateList = append(addressStateList, &addressState)
 	}
 
 	if err := rows.Err(); err != nil {
-		r.log.Error("device.r.GetAddressStateList() 오류", zap.Error(err))
+		r.log.Info("device.r.GetAddressStateList() 오류", zap.Error(err))
 		return nil, err
 	}
 
@@ -238,7 +238,7 @@ func (r *metaRepository) GetAddressCityListByState(ctx context.Context, state st
 	)
 
 	if err != nil {
-		r.log.Error("device.r.GetAddressCityListByState() 오류", zap.Error(err))
+		r.log.Info("device.r.GetAddressCityListByState() 오류", zap.Error(err))
 		return nil, err
 	}
 	defer rows.Close()
@@ -250,7 +250,7 @@ func (r *metaRepository) GetAddressCityListByState(ctx context.Context, state st
 			&addressCity.StateTitle,
 			&addressCity.Title,
 		); err != nil {
-			r.log.Error("device.r.GetAddressCityListByState() 오류", zap.Error(err))
+			r.log.Info("device.r.GetAddressCityListByState() 오류", zap.Error(err))
 			return nil, err
 		}
 
@@ -258,7 +258,7 @@ func (r *metaRepository) GetAddressCityListByState(ctx context.Context, state st
 	}
 
 	if err := rows.Err(); err != nil {
-		r.log.Error("device.r.GetAddressCityListByState() 오류", zap.Error(err))
+		r.log.Info("device.r.GetAddressCityListByState() 오류", zap.Error(err))
 		return nil, err
 	}
 

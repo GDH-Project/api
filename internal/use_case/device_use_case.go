@@ -24,7 +24,7 @@ func (uc *deviceUseCase) CreateDevice(ctx context.Context, deviceInfoData *domai
 
 	if !validateUser.Exec() {
 		err := errors.New("권한이 존재하지 않습니다")
-		uc.log.Error("device.uc.CreateDeviceInfo() 오류 - 권한이 존재하지 않습니다.", zap.Error(err))
+		uc.log.Info("device.uc.CreateDeviceInfo() 오류 - 권한이 존재하지 않습니다.", zap.Error(err))
 		return err
 	}
 
@@ -38,7 +38,7 @@ func (uc *deviceUseCase) CreateDevice(ctx context.Context, deviceInfoData *domai
 	// 작물 정보 ID
 	cropData, err := uc.metaSvc.GetCropByParam(ctx, &domain.Crop{Title: deviceInfoData.Crop})
 	if err != nil {
-		uc.log.Error("device.uc.CreateDeviceInfo() 오류 - 작물 정보를 받아올 수 없습니다.", zap.Error(err))
+		uc.log.Info("device.uc.CreateDeviceInfo() 오류 - 작물 정보를 받아올 수 없습니다.", zap.Error(err))
 		return errors.New("존재하지 않는 작물입니다")
 	}
 	rawDeviceInfo.CropID = cropData.ID
@@ -46,7 +46,7 @@ func (uc *deviceUseCase) CreateDevice(ctx context.Context, deviceInfoData *domai
 	// 갱신 주기 ID
 	updateCycleData, err := uc.metaSvc.GetUpdateCycleList(ctx)
 	if err != nil {
-		uc.log.Error("device.uc.CreateDeviceInfo() 오류 - 갱신주기를 받아올 수 없습니다.", zap.Error(err))
+		uc.log.Info("device.uc.CreateDeviceInfo() 오류 - 갱신주기를 받아올 수 없습니다.", zap.Error(err))
 		return errors.New("갱신주기 조회중 오류가 발생했습니다")
 	}
 	for _, data := range updateCycleData {
@@ -57,7 +57,7 @@ func (uc *deviceUseCase) CreateDevice(ctx context.Context, deviceInfoData *domai
 	}
 	if rawDeviceInfo.UpdateCycleID == 0 {
 		err := errors.New("존재하지 않는 갱신주기 입니다")
-		uc.log.Error("device.uc.CreateDeviceInfo() 오류 - 존재하지 않는 갱신 주기 입니다.", zap.Error(err))
+		uc.log.Info("device.uc.CreateDeviceInfo() 오류 - 존재하지 않는 갱신 주기 입니다.", zap.Error(err))
 		return err
 	}
 
@@ -67,8 +67,8 @@ func (uc *deviceUseCase) CreateDevice(ctx context.Context, deviceInfoData *domai
 		Title:      deviceInfoData.Address.City,
 	})
 	if err != nil {
-		uc.log.Error("device.uc.CreateDeviceInfo() 오류 - 존재하지 않는 주소 입니다.", zap.Error(err))
-		return err
+		uc.log.Info("device.uc.CreateDeviceInfo() 오류 - 존재하지 않는 주소 입니다.", zap.Error(err))
+		return errors.New("잘못된 주소 입니다")
 	}
 	rawDeviceInfo.AddressStateID = addressData.StateID
 	rawDeviceInfo.AddressCityID = addressData.CityID
@@ -80,7 +80,7 @@ func (uc *deviceUseCase) CreateDevice(ctx context.Context, deviceInfoData *domai
 		// 센서 정보
 		sensorList, err := uc.metaSvc.GetSensorList(ctx)
 		if err != nil {
-			uc.log.Error("device.uc.CreateDeviceInfo() 오류 - 센서 정보를 받아올 수 없습니다.", zap.Error(err))
+			uc.log.Info("device.uc.CreateDeviceInfo() 오류 - 센서 정보를 받아올 수 없습니다.", zap.Error(err))
 			return err
 		}
 		for _, item := range deviceSchemaDataList {
@@ -94,7 +94,7 @@ func (uc *deviceUseCase) CreateDevice(ctx context.Context, deviceInfoData *domai
 				}
 			}
 			if temp.TargetSensorID == 0 {
-				uc.log.Error("device.uc.CreateDeviceInfo() 오류 - 존재하지 않는 센서 이름 입니다.", zap.Error(err))
+				uc.log.Info("device.uc.CreateDeviceInfo() 오류 - 존재하지 않는 센서 이름 입니다.", zap.Error(err))
 				return errors.New("존재하지 않는 센서 입니다")
 			}
 
@@ -103,12 +103,12 @@ func (uc *deviceUseCase) CreateDevice(ctx context.Context, deviceInfoData *domai
 	}
 
 	if err := uc.deviceSvc.CreateDevice(ctx, &rawDeviceInfo, rawDeviceRequestSchemaList); err != nil {
-		uc.log.Error("device.uc.CreateDeviceInfo() 오류 - 장비 생성중 오류가 발생했습니다.",
+		uc.log.Info("device.uc.CreateDeviceInfo() 오류 - 장비 생성중 오류가 발생했습니다.",
 			zap.Any("deviceData", rawDeviceInfo),
 			zap.Any("schemaDataList", rawDeviceRequestSchemaList),
 			zap.Error(err),
 		)
-		return err
+		return errors.New("장비 생성중 오류가 발생했습니다")
 	}
 
 	return nil
