@@ -15,6 +15,39 @@ type deviceRepository struct {
 	db  *pgxpool.Pool
 }
 
+func (r *deviceRepository) UpdateDeviceInfo(ctx context.Context, in *domain.RawDeviceInfo) error {
+	q := `
+			UPDATE device.device_info 
+			SET
+				title = COALESCE(NULLIF($2, ''), title),
+				device_name = COALESCE(NULLIF($3, ''), device_name),
+				-- 작물 정보도 변경이 가능하지만 변경 하지 못하게 조치 필요
+				crop_id = COALESCE(NULLIF($4, 0), crop_id),
+			    update_cycle_id = COALESCE(NULLIF($5, 0), update_cycle_id),
+			    address_state_id = COALESCE(NULLIF($6, 0), address_state_id),
+			    address_city_id = COALESCE(NULLIF($7, 0), address_city_id)
+			WHERE 
+			    id = $1::UUID;			    
+		`
+
+	if _, err := r.db.Exec(ctx, q,
+		in.ID,
+		in.Title,
+		in.Name,
+		in.CropID,
+		in.UpdateCycleID,
+		in.AddressStateID,
+		in.AddressCityID,
+	); err != nil {
+		r.log.Info("device.r.UpdateDeviceInfo() 오류",
+			zap.Error(err),
+			zap.Any("data", in),
+		)
+		return err
+	}
+	return nil
+}
+
 func (r *deviceRepository) GetDeviceInfoListByParamAndPage(ctx context.Context, in *domain.DeviceInfo, page *domain.Page) ([]*domain.DeviceInfo, *domain.Page, error) {
 	var deviceInfoList []*domain.DeviceInfo
 	var count int
@@ -179,7 +212,7 @@ func (r *deviceRepository) GetDeviceInfoByID(ctx context.Context, id string) (*d
 	return &deviceInfo, nil
 }
 
-func (r *deviceRepository) CreateDeviceInfoTx(ctx context.Context, tx pgx.Tx, in *domain.CreateDeviceInfo) (string, error) {
+func (r *deviceRepository) CreateDeviceInfoTx(ctx context.Context, tx pgx.Tx, in *domain.RawDeviceInfo) (string, error) {
 	var id string
 	q := `
 			INSERT INTO 

@@ -11,9 +11,11 @@ type DeviceRepository interface {
 	// WithTransaction 트렌잭션 함수
 	WithTransaction(ctx context.Context, f func(tx pgx.Tx) error) error
 	// CreateDeviceInfoTx deviceInfo를 생성하고 ID 와 오류를 반환
-	CreateDeviceInfoTx(ctx context.Context, tx pgx.Tx, in *CreateDeviceInfo) (string, error)
+	CreateDeviceInfoTx(ctx context.Context, tx pgx.Tx, in *RawDeviceInfo) (string, error)
 	// GetDeviceInfoByID deviceInfo 를 ID 기준으로 찾아서 반환
 	GetDeviceInfoByID(ctx context.Context, id string) (*DeviceInfo, error)
+	// UpdateDeviceInfo 장치 정보 업데이트
+	UpdateDeviceInfo(ctx context.Context, in *RawDeviceInfo) error
 	// GetDeviceInfoListByParamAndPage deviceInfo 를 파라미터와 페이지 옵션을 기준으로 찾아서 리스트로 반환한다.
 	GetDeviceInfoListByParamAndPage(ctx context.Context, in *DeviceInfo, page *Page) ([]*DeviceInfo, *Page, error)
 }
@@ -37,7 +39,8 @@ type DeviceRequestSchema struct {
 	Target   string `json:"target" doc:"센서 데이터 리스트의 title 명칭 입니다." example:"기온"`
 }
 
-type CreateDeviceInfo struct {
+type RawDeviceInfo struct {
+	ID             string // 장치 고유 ID
 	UserID         string // 유저의 UUID 입니다.
 	Title          string
 	Name           string
