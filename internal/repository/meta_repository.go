@@ -14,6 +14,26 @@ type metaRepository struct {
 	db  *pgxpool.Pool
 }
 
+func (r *metaRepository) GetAddressIDByStateTitleAndCityTitle(ctx context.Context, in *domain.AddressCity) (*domain.RawAddressData, error) {
+	var addressData domain.RawAddressData
+
+	q := `
+			SELECT c.id, c.address_state_id, c.title FROM device.address_city c
+			JOIN device.address_state s ON s.id = c.address_state_id
+			WHERE s.title = $1 
+			  AND c.title = $2;
+		`
+	if err := r.db.QueryRow(ctx, q, in.StateTitle, in.Title).Scan(
+		&addressData.StateID,
+		&addressData.CityID,
+	); err != nil {
+		r.log.Error("r.device.GetAddressIDByStateTitleAndCityTitle() 오류", zap.Error(err))
+		return nil, err
+	}
+
+	return &addressData, nil
+}
+
 func (r *metaRepository) GetSensorList(ctx context.Context) ([]*domain.Sensor, error) {
 	q := `SELECT id, title, eng_title, description, unit, unit_description FROM device.sensor;`
 	rows, err := r.db.Query(ctx, q)
