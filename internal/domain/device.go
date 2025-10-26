@@ -14,6 +14,8 @@ type DeviceRepository interface {
 	CreateDeviceInfoTx(ctx context.Context, tx pgx.Tx, in *CreateDeviceInfo) (string, error)
 	// GetDeviceInfoByID deviceInfo 를 ID 기준으로 찾아서 반환
 	GetDeviceInfoByID(ctx context.Context, id string) (*DeviceInfo, error)
+	// GetDeviceInfoListByParamAndPage deviceInfo 를 파라미터와 페이지 옵션을 기준으로 찾아서 리스트로 반환한다.
+	GetDeviceInfoListByParamAndPage(ctx context.Context, in *DeviceInfo, page *Page) ([]*DeviceInfo, *Page, error)
 }
 
 // DeviceData

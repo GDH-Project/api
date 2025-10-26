@@ -15,6 +15,122 @@ type deviceRepository struct {
 	db  *pgxpool.Pool
 }
 
+func (r *deviceRepository) GetDeviceInfoListByParamAndPage(ctx context.Context, in *domain.DeviceInfo, page *domain.Page) ([]*domain.DeviceInfo, *domain.Page, error) {
+	var deviceInfoList []*domain.DeviceInfo
+	var count int
+	// info 수 카운트
+	q := `
+			SELECT COUNT(info.id)
+			FROM device.device_info info
+				JOIN device.crop crop ON info.crop_id = crop.id
+				JOIN device.update_cycle uc ON info.update_cycle_id = uc.id
+			    JOIN device.address_state state ON info.address_state_id = state.id
+				JOIN device.address_city city ON info.address_city_id = city.id
+			WHERE info.deleted_at IS NULL 
+			    AND (NULLIF($1, '') IS NULL OR info.user_id = NULLIF($1, '')::uuid)
+				AND (NULLIF($2, '') IS NULL OR info.title LIKE '%' || $2 || '%')
+				AND (NULLIF($3, '') IS NULL OR crop.title = NULLIF($3, ''))
+				AND (NULLIF($4, '') IS NULL OR state.title = NULLIF($4, ''))
+				AND (NULLIF($5, '') IS NULL OR city.title = NULLIF($5, ''))			          
+		`
+	if err := r.db.QueryRow(ctx, q,
+		in.UserID,
+		in.Title,
+		in.Crop,
+		in.Address.State,
+		in.Address.City,
+	).Scan(&count); err != nil {
+		r.log.Error("device.r.GetDeviceInfoListByParamAndPage() 오류", zap.Error(err))
+		return nil, nil, err
+	}
+
+	r.log.Info("총 레코드 수",
+		zap.Int("count", count),
+		zap.Int("pageSize", page.Size),
+		zap.Float64("계산된 값", float64(count)/float64(page.Size)),
+	)
+
+	q = `
+			SELECT 
+			    info.user_id,
+			    info.id,
+			    info.title,
+			    info.device_name,
+			    crop.title,
+			    uc.interval,
+			    state.title,
+			    city.title,
+			    info.created_at,
+			    info.updated_at
+			FROM device.device_info info
+				JOIN device.crop crop ON info.crop_id = crop.id
+				JOIN device.update_cycle uc ON info.update_cycle_id = uc.id
+			    JOIN device.address_state state ON info.address_state_id = state.id
+				JOIN device.address_city city ON info.address_city_id = city.id
+			WHERE info.deleted_at IS NULL 
+			    -- $1 (user_id): 값이 있을 때만 user_id 필터링
+			    AND (NULLIF($1, '') IS NULL OR info.user_id = NULLIF($1, '')::uuid)
+				-- $2 (title LIKE): 값이 있을 때만 LIKE 검색
+				AND (NULLIF($2, '') IS NULL OR info.title LIKE '%' || $2 || '%')
+				-- $3 (crop.title): 값이 있을 때만 crop.title 필터링
+				AND (NULLIF($3, '') IS NULL OR crop.title = NULLIF($3, ''))
+				-- $4 (state.title): 값이 있을 때만 state.title 필터링
+				AND (NULLIF($4, '') IS NULL OR state.title = NULLIF($4, ''))
+				-- $5 (city.title): 값이 있을 때만 city.title 필터링
+				AND (NULLIF($5, '') IS NULL OR city.title = NULLIF($5, ''))			          
+			ORDER BY INFO.created_at DESC
+			LIMIT $6 OFFSET $7;
+		`
+	rows, err := r.db.Query(ctx, q,
+		in.UserID,
+		in.Title,
+		in.Crop,
+		in.Address.State,
+		in.Address.City,
+		page.Size,
+		page.Offset(),
+	)
+	if err != nil {
+		r.log.Error("device.r.GetDeviceInfoListByParamAndPage() 오류", zap.Error(err))
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var deviceInfo domain.DeviceInfo
+		if err := rows.Scan(
+			&deviceInfo.UserID,
+			&deviceInfo.ID,
+			&deviceInfo.Title,
+			&deviceInfo.Name,
+			&deviceInfo.Crop,
+			&deviceInfo.UpdateCycle,
+			&deviceInfo.Address.City,
+			&deviceInfo.Address.State,
+			&deviceInfo.CreatedAt,
+			&deviceInfo.UpdatedAt,
+		); err != nil {
+			r.log.Error("device.r.GetDeviceInfoListByParamAndPage() 오류", zap.Error(err))
+			return nil, nil, err
+		}
+
+		deviceInfoList = append(deviceInfoList, &deviceInfo)
+	}
+
+	if err := rows.Err(); err != nil {
+		r.log.Error("device.r.GetDeviceInfoListByParamAndPage() 오류", zap.Error(err))
+		return nil, nil, err
+	}
+
+	// 페이징 정보
+	p := &domain.Page{
+		Size:        page.Size,
+		Page:        page.Page,
+		RecordCount: count,
+	}
+	return deviceInfoList, p, nil
+}
+
 func (r *deviceRepository) GetDeviceInfoByID(ctx context.Context, id string) (*domain.DeviceInfo, error) {
 	var deviceInfo domain.DeviceInfo
 	q := `
