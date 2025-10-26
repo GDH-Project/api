@@ -15,7 +15,28 @@ type deviceRepository struct {
 	db  *pgxpool.Pool
 }
 
+func (r *deviceRepository) DeleteDeviceInfoByID(ctx context.Context, id string) error {
+	var successID string
+	q := `UPDATE device.device_info SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1::uuid RETURNING id;`
+	if err := r.db.QueryRow(ctx, q, id).Scan(&successID); err != nil {
+		r.log.Error("device.r.DeleteDeviceInfoByID() 오류", zap.String("id", id), zap.Error(err))
+		return err
+	}
+
+	if successID == "" || id != successID {
+		err := errors.New("id에 해당하는 필드가 존재하지 않습니다")
+		r.log.Info("device.r.DeleteDeviceInfoByID() 오류",
+			zap.String("id", id),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	return nil
+}
+
 func (r *deviceRepository) UpdateDeviceInfo(ctx context.Context, in *domain.RawDeviceInfo) error {
+	var successID string
 	q := `
 			UPDATE device.device_info 
 			SET
@@ -27,10 +48,13 @@ func (r *deviceRepository) UpdateDeviceInfo(ctx context.Context, in *domain.RawD
 			    address_state_id = COALESCE(NULLIF($6, 0), address_state_id),
 			    address_city_id = COALESCE(NULLIF($7, 0), address_city_id)
 			WHERE 
-			    id = $1::UUID;			    
+			    deleted_at IS NULL 
+			  AND
+			    id = $1::UUID
+			RETURNING id;			    
 		`
 
-	if _, err := r.db.Exec(ctx, q,
+	if err := r.db.QueryRow(ctx, q,
 		in.ID,
 		in.Title,
 		in.Name,
@@ -38,11 +62,21 @@ func (r *deviceRepository) UpdateDeviceInfo(ctx context.Context, in *domain.RawD
 		in.UpdateCycleID,
 		in.AddressStateID,
 		in.AddressCityID,
-	); err != nil {
+	).Scan(&successID); err != nil {
 		r.log.Info("device.r.UpdateDeviceInfo() 오류",
 			zap.Error(err),
 			zap.Any("data", in),
 		)
+		return err
+	}
+
+	if successID == "" {
+		err := errors.New("id에 해당하는 필드가 존재하지 않습니다")
+		r.log.Info("device.r.UpdateDeviceInfo() 오류",
+			zap.Error(err),
+			zap.Any("data", in),
+		)
+
 		return err
 	}
 	return nil

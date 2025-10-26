@@ -14,10 +14,12 @@ type DeviceRepository interface {
 	CreateDeviceInfoTx(ctx context.Context, tx pgx.Tx, in *RawDeviceInfo) (string, error)
 	// GetDeviceInfoByID deviceInfo 를 ID 기준으로 찾아서 반환
 	GetDeviceInfoByID(ctx context.Context, id string) (*DeviceInfo, error)
-	// UpdateDeviceInfo 장치 정보 업데이트
-	UpdateDeviceInfo(ctx context.Context, in *RawDeviceInfo) error
 	// GetDeviceInfoListByParamAndPage deviceInfo 를 파라미터와 페이지 옵션을 기준으로 찾아서 리스트로 반환한다.
 	GetDeviceInfoListByParamAndPage(ctx context.Context, in *DeviceInfo, page *Page) ([]*DeviceInfo, *Page, error)
+	// UpdateDeviceInfo 장치 정보 업데이트
+	UpdateDeviceInfo(ctx context.Context, in *RawDeviceInfo) error
+	// DeleteDeviceInfoByID 장비 제거
+	DeleteDeviceInfoByID(ctx context.Context, id string) error
 }
 
 // DeviceData
