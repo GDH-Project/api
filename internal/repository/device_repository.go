@@ -17,6 +17,43 @@ type deviceRepository struct {
 	db  *pgxpool.Pool
 }
 
+func (r *deviceRepository) GetDeviceRequestSchemaListByDeviceID(ctx context.Context, deviceID string) ([]*domain.DeviceRequestSchema, error) {
+	var deviceSchemaList []*domain.DeviceRequestSchema
+	q := `
+			SELECT rq.id, rq.key ,s.title
+    		FROM device.req_to_sensor rq
+    			JOIN device.sensor s ON rq.sensor_id = s.id
+    		WHERE rq.device_id = $1
+    	`
+
+	rows, err := r.db.Query(ctx, q, deviceID)
+	if err != nil {
+		r.log.Error("device.r.GetDeviceRequestSchemaListByDeviceID() 오류", zap.Error(err))
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var deviceRequestSchema domain.DeviceRequestSchema
+		if err := rows.Scan(
+			&deviceRequestSchema.ID,
+			&deviceRequestSchema.Key,
+			&deviceRequestSchema.Target,
+		); err != nil {
+			r.log.Error("device.r.GetDeviceRequestSchemaListByDeviceID() 오류", zap.Error(err))
+			return nil, err
+		}
+		deviceSchemaList = append(deviceSchemaList, &deviceRequestSchema)
+	}
+
+	if err := rows.Err(); err != nil {
+		r.log.Error("device.r.GetDeviceRequestSchemaListByDeviceID() 오류", zap.Error(err))
+		return nil, err
+	}
+
+	return deviceSchemaList, nil
+}
+
 func (r *deviceRepository) CreateDeviceReqeustSchemaListTx(ctx context.Context, tx pgx.Tx, deviceID string, schemas []*domain.RawDeviceRequestSchema) error {
 	// deviceID 가 없거나 스키마가 없는 경우 필터링
 	if deviceID == "" || len(schemas) == 0 {

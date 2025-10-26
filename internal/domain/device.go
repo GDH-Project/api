@@ -22,6 +22,7 @@ type DeviceRepository interface {
 	DeleteDeviceInfoByID(ctx context.Context, id string) error
 	// CreateDeviceReqeustSchemaListTx req_to_sensor 에 삽입되는 디바이스 응답(JSON) 키와 센서를 연결하는 부분
 	CreateDeviceReqeustSchemaListTx(ctx context.Context, tx pgx.Tx, deviceID string, schemas []*RawDeviceRequestSchema) error
+	GetDeviceRequestSchemaListByDeviceID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
 }
 
 // DeviceData
@@ -44,10 +45,9 @@ type RawDeviceRequestSchema struct {
 //
 // 장비의 요청과 센서 정보를 바인딩 하는 스키마 입니다.
 type DeviceRequestSchema struct {
-	ID       int    `json:"id" doc:"고유 ID 입니다."`
-	DeviceID string // 장치 ID
-	Key      string `json:"key" doc:"장비에서 보내는 데이터의 json key 입니다." example:"degree"`
-	Target   string `json:"target" doc:"센서 데이터 리스트의 title 명칭 입니다." example:"기온"`
+	ID     int    `json:"id" doc:"고유 ID 입니다."`
+	Key    string `json:"key" doc:"장비에서 보내는 데이터의 json key 입니다." example:"degree"`
+	Target string `json:"target" doc:"센서 데이터 리스트의 title 명칭 입니다." example:"기온"`
 }
 
 type RawDeviceInfo struct {
