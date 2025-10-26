@@ -32,6 +32,10 @@ type DeviceService interface {
 	CreateDevice(ctx context.Context, deviceInfoData *RawDeviceInfo, deviceSchemaDataList []*RawDeviceRequestSchema) error
 }
 
+type DeviceUseCase interface {
+	CreateDevice(ctx context.Context, deviceInfoData *DeviceInfo, deviceSchemaDataList []*DeviceRequestSchema) error
+}
+
 // DeviceData
 //
 // 장비에서 수집된 데이터 JSON 배열 입니다.
