@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/GDH-Project/api/internal/domain"
 	"github.com/jackc/pgx/v5"
@@ -13,6 +15,58 @@ import (
 type deviceRepository struct {
 	log *zap.Logger
 	db  *pgxpool.Pool
+}
+
+func (r *deviceRepository) CreateDeviceReqeustSchemaListTx(ctx context.Context, tx pgx.Tx, deviceID string, schemas []*domain.RawDeviceRequestSchema) error {
+	// deviceID 가 없거나 스키마가 없는 경우 필터링
+	if deviceID == "" || len(schemas) == 0 {
+		err := errors.New("파라미터를 확인해 주세요")
+		r.log.Info("device.r.CreateDeviceReqeustSchemaListTx() 오류",
+			zap.String("deviceID", deviceID),
+			zap.Any("schemas", schemas),
+			zap.Error(err),
+		)
+
+		return err
+	}
+
+	// 쿼리에 필요한 총 $1 같은 플레이스홀더 갯수
+	totalPlaceholders := len(schemas) * 3
+
+	valuePlaceholders := make([]string, len(schemas))
+	args := make([]interface{}, 0, totalPlaceholders)
+
+	for i, item := range schemas {
+		// $1, $2 행 문자
+		ph1 := i*3 + 1
+		ph2 := i*3 + 2
+		ph3 := i*3 + 3
+
+		valuePlaceholders[i] = fmt.Sprintf("($%d::uuid, $%d, $%d)", ph1, ph2, ph3)
+
+		args = append(args, deviceID, item.Key, item.TargetSensorID)
+	}
+
+	sb := strings.Builder{}
+	sb.WriteString("INSERT INTO device.req_to_sensor(device_id, key, sensor_id) VALUES ")
+	sb.WriteString(strings.Join(valuePlaceholders, ","))
+	sb.WriteString(";")
+
+	q := sb.String()
+
+	_, err := tx.Exec(ctx, q, args...)
+	if err != nil {
+		r.log.Error("device.r.CreateDeviceReqeustSchemaListTx() 오류",
+			zap.String("deviceID", deviceID),
+			zap.String("q", q),
+			zap.Any("args", args),
+
+			zap.Error(err),
+		)
+		return err
+	}
+
+	return nil
 }
 
 func (r *deviceRepository) DeleteDeviceInfoByID(ctx context.Context, id string) error {
@@ -282,14 +336,16 @@ func (r *deviceRepository) WithTransaction(ctx context.Context, f func(tx pgx.Tx
 
 	// 트랜잭션중 패닉 오류 발생시 트랜잭션을 롤백 시키고 패닉을 다시 발생시킨다.
 	defer func() {
-		if r := recover(); r != nil {
+		if rc := recover(); rc != nil {
+			r.log.Info("device.r.WithTransaction() 트랜잭션 오류 발생으로 인한 롤백", zap.Error(errors.New("트랜잭션 도중 패닉 발생")))
 			_ = tx.Rollback(ctx)
-			panic(r)
+			panic(rc)
 		}
 	}()
 
 	// 만약 f(tx)를 실행후 오류 발생시 트랜잭션을 롤백 시키고 오류를 반환한다.
 	if err := f(tx); err != nil {
+		r.log.Info("device.r.WithTransaction() 트랜잭션 오류 발생으로 인한 롤백", zap.Error(err))
 		_ = tx.Rollback(ctx)
 		return err
 	}

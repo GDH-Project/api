@@ -20,6 +20,8 @@ type DeviceRepository interface {
 	UpdateDeviceInfo(ctx context.Context, in *RawDeviceInfo) error
 	// DeleteDeviceInfoByID 장비 제거
 	DeleteDeviceInfoByID(ctx context.Context, id string) error
+	// CreateDeviceReqeustSchemaListTx req_to_sensor 에 삽입되는 디바이스 응답(JSON) 키와 센서를 연결하는 부분
+	CreateDeviceReqeustSchemaListTx(ctx context.Context, tx pgx.Tx, deviceID string, schemas []*RawDeviceRequestSchema) error
 }
 
 // DeviceData
@@ -29,6 +31,13 @@ type DeviceData struct {
 	Time     time.Time              `json:"-"` // Datajson에 추가할 시간 정보
 	DeviceID string                 `json:"-"` // 장치 ID
 	Data     map[string]interface{} `json:"data" doc:"장비에서 수집된 데이터 JSON문자열 + time 정보"`
+}
+
+type RawDeviceRequestSchema struct {
+	ID             int
+	DeviceID       string
+	Key            string
+	TargetSensorID int
 }
 
 // DeviceRequestSchema
