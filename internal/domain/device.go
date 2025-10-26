@@ -23,6 +23,7 @@ type DeviceRepository interface {
 	// CreateDeviceReqeustSchemaListTx req_to_sensor 에 삽입되는 디바이스 응답(JSON) 키와 센서를 연결하는 부분
 	CreateDeviceReqeustSchemaListTx(ctx context.Context, tx pgx.Tx, deviceID string, schemas []*RawDeviceRequestSchema) error
 	GetDeviceRequestSchemaListByDeviceID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
+	GetDeviceRequestSchemaByID(ctx context.Context, id string) (*DeviceRequestSchema, error)
 }
 
 // DeviceData

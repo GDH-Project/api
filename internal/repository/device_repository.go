@@ -17,6 +17,26 @@ type deviceRepository struct {
 	db  *pgxpool.Pool
 }
 
+func (r *deviceRepository) GetDeviceRequestSchemaByID(ctx context.Context, id string) (*domain.DeviceRequestSchema, error) {
+	var deviceSchema domain.DeviceRequestSchema
+	q := `
+			SELECT rq.id, rq.key ,s.title
+    		FROM device.req_to_sensor rq
+    			JOIN device.sensor s ON rq.sensor_id = s.id
+    		WHERE rq.id = $1
+    	`
+	if err := r.db.QueryRow(ctx, q, id).Scan(
+		&deviceSchema.ID,
+		&deviceSchema.Key,
+		&deviceSchema.Target,
+	); err != nil {
+		r.log.Info("device.r.GetDeviceRequestSchemaByID() 오류", zap.Error(err))
+		return nil, err
+	}
+
+	return &deviceSchema, nil
+}
+
 func (r *deviceRepository) GetDeviceRequestSchemaListByDeviceID(ctx context.Context, deviceID string) ([]*domain.DeviceRequestSchema, error) {
 	var deviceSchemaList []*domain.DeviceRequestSchema
 	q := `
