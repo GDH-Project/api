@@ -25,7 +25,7 @@ func (c *ValidateUser) getValue(key string) string {
 	return v
 }
 
-// UserID ctx에서 추출한 UserID 이다. 만약 ctx에 설전정 UserID가 없을 경우 공백 문자를 반환한다.
+// UserID ctx에서 추출한 UserID 이다. 만약 ctx에 설정된 UserID가 없을 경우 공백 문자를 반환한다.
 func (c *ValidateUser) UserID() string {
 	return c.getValue(domain.CTX_USER_ID)
 }
@@ -37,7 +37,7 @@ func (c *ValidateUser) UserRole() string {
 
 // Exec 권한 평가 실행한 후 불리언을 반환한다.
 //
-// 권한 평가의 우선 순위는 현재 권한을 불라 올수 없는 경우 > 차단 권한 > 통과 권한 의 우선순위를 가지고 있다.
+// 권한 평가의 우선 순위는 현재 권한을 불러 올수 없는 경우 > 차단 권한 > 통과 권한 의 우선순위를 가지고 있다.
 func (c *ValidateUser) Exec() bool {
 	currentRole := c.UserRole()
 

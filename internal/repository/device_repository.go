@@ -311,8 +311,8 @@ func (r *deviceRepository) GetDeviceInfoListByParamAndPage(ctx context.Context, 
 			&deviceInfo.Name,
 			&deviceInfo.Crop,
 			&deviceInfo.UpdateCycle,
-			&deviceInfo.Address.City,
 			&deviceInfo.Address.State,
+			&deviceInfo.Address.City,
 			&deviceInfo.CreatedAt,
 			&deviceInfo.UpdatedAt,
 		); err != nil {
@@ -367,8 +367,8 @@ func (r *deviceRepository) GetDeviceInfoByID(ctx context.Context, id string) (*d
 		&deviceInfo.Name,
 		&deviceInfo.Crop,
 		&deviceInfo.UpdateCycle,
-		&deviceInfo.Address.City,
 		&deviceInfo.Address.State,
+		&deviceInfo.Address.City,
 		&deviceInfo.CreatedAt,
 		&deviceInfo.UpdatedAt,
 	); err != nil {
@@ -417,7 +417,11 @@ func (r *deviceRepository) CreateDeviceInfoTx(ctx context.Context, tx pgx.Tx, in
 }
 
 func (r *deviceRepository) WithTransaction(ctx context.Context, f func(tx pgx.Tx) error) error {
-	tx, _ := r.db.Begin(ctx)
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		r.log.Error("device.r.WithTransaction() 트랜잭션 시작 오류", zap.Error(err))
+		return err
+	}
 
 	// 트랜잭션중 패닉 오류 발생시 트랜잭션을 롤백 시키고 패닉을 다시 발생시킨다.
 	defer func() {
