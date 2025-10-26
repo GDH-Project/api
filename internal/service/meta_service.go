@@ -12,6 +12,10 @@ type metaService struct {
 	r   domain.MetaRepository
 }
 
+func (svc *metaService) GetAddressIDByStateTitleAndCityTitle(ctx context.Context, in *domain.AddressCity) (*domain.RawAddressData, error) {
+	return svc.r.GetAddressIDByStateTitleAndCityTitle(ctx, in)
+}
+
 func (svc *metaService) GetSensorList(ctx context.Context) ([]*domain.Sensor, error) {
 	return svc.r.GetSensorList(ctx)
 

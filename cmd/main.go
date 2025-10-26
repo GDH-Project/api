@@ -98,6 +98,10 @@ func main() {
 		metaService := service.NewMetaService(log, metaRepository)
 		metaUseCase := usecase.NewMetaUseCase(log, metaService)
 
+		deviceRepository := repository.NewDeviceRepository(log, db)
+		deviceService := service.NewDeviceService(log, deviceRepository)
+		deviceUseCase := usecase.NewDeviceUseCase(log, deviceService, metaService)
+
 		middleware := m.NewMiddleware(api, log, authUseCase)
 
 		// gRPC 미들웨어 적용
@@ -106,11 +110,13 @@ func main() {
 		// Register Handler
 		handler.RegisterAuthHandler(api, log, authUseCase, userUseCase, middleware)
 		handler.RegisterMetaHandler(api, log, metaUseCase)
+		handler.RegisterDeviceHandler(api, log, deviceUseCase, middleware)
 
 		server := http.Server{
 			Addr:    ":8080",
 			Handler: r,
 		}
+
 		// 서버 시작시
 		hooks.OnStart(func() {
 			log.Info("서버를 시작합니다 :8080")

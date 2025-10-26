@@ -20,7 +20,7 @@ type MetaRepository interface {
 	GetAddressStateList(ctx context.Context) ([]*AddressState, error)
 	// GetAddressCityListByState 도/특별시 정보를 통해 시/군/구 리스트 반환
 	GetAddressCityListByState(ctx context.Context, state string) ([]*AddressCity, error)
-
+	GetAddressIDByStateTitleAndCityTitle(ctx context.Context, in *AddressCity) (*RawAddressData, error)
 	// GetDeviceDataListByUserIDWithPage(ctx context.Context, userID string, page Page) ([]*DeviceData, error)
 	//
 	// GetDeviceRequestSchemaListByDeviceID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
@@ -47,6 +47,7 @@ type MetaService interface {
 	GetAddressStateList(ctx context.Context) ([]*AddressState, error)
 	// GetAddressCityListByState 도/특별시 정보를 통해 시/군/구 리스트 반환
 	GetAddressCityListByState(ctx context.Context, state string) ([]*AddressCity, error)
+	GetAddressIDByStateTitleAndCityTitle(ctx context.Context, in *AddressCity) (*RawAddressData, error)
 }
 
 type MetaUseCase interface {
@@ -105,6 +106,12 @@ type UpdateCycle struct {
 type AddressState struct {
 	ID    int    `json:"-"`
 	Title string `json:"title" doc:"도/특별시 입니다." example:"서울특별시"`
+}
+
+// RawAddressData ID 기반 조회시 필요한 데이터
+type RawAddressData struct {
+	StateID int
+	CityID  int
 }
 
 // AddressCity
