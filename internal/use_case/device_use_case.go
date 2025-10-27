@@ -18,6 +18,11 @@ type deviceUseCase struct {
 	metaSvc   domain.MetaService
 }
 
+// GetDeviceApiKeyByID 권한 검사가 존재하지 않기 때문에 조심할 것
+func (uc *deviceUseCase) GetDeviceApiKeyByID(ctx context.Context, apiKey string) (string, error) {
+	return uc.deviceSvc.GetDeviceApiKeyByID(ctx, apiKey)
+}
+
 func (uc *deviceUseCase) CreateDeviceApiKey(ctx context.Context, in *domain.ApiKey) (*domain.ApiKey, error) {
 	// 유저 권한 확인
 	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)

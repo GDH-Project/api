@@ -28,6 +28,8 @@ type DeviceRepository interface {
 	UpdateDeviceRequestSchema(ctx context.Context, in *RawDeviceRequestSchema) error
 	DeleteDeviceRequestSchemaByID(ctx context.Context, id int) error
 	CreateDeviceApiKey(ctx context.Context, in *RawApiKey) (*RawApiKey, error)
+	// GetDeviceApiKeyByID 반환되는 값은 장치 ID 이다.
+	GetDeviceApiKeyByID(ctx context.Context, id string) (string, error)
 }
 
 type DeviceService interface {
@@ -40,6 +42,8 @@ type DeviceService interface {
 	DeleteDeviceInfoByID(ctx context.Context, deviceID string, userID string) error
 	CreateDeviceReqeustSchema(ctx context.Context, in *RawDeviceRequestSchema) error
 	CreateDeviceApiKey(ctx context.Context, in *RawApiKey) (*ApiKey, error)
+	// GetDeviceApiKeyByID 반횐되는 값은 장치 ID 이다.
+	GetDeviceApiKeyByID(ctx context.Context, apiKey string) (string, error)
 }
 
 type DeviceUseCase interface {
@@ -54,6 +58,8 @@ type DeviceUseCase interface {
 
 	CreateDeviceReqeustSchema(ctx context.Context, deviceID string, in *DeviceRequestSchema) error
 	CreateDeviceApiKey(ctx context.Context, in *ApiKey) (*ApiKey, error)
+	// GetDeviceApiKeyByID 반횐되는 값은 장치 ID 이다.
+	GetDeviceApiKeyByID(ctx context.Context, apiKey string) (string, error)
 }
 
 // DeviceData

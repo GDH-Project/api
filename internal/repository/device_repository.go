@@ -17,6 +17,17 @@ type deviceRepository struct {
 	db  *pgxpool.Pool
 }
 
+func (r *deviceRepository) GetDeviceApiKeyByID(ctx context.Context, id string) (string, error) {
+	var deviceID string
+	q := `SELECT device_info_id FROM device.api_key WHERE id = $1 ;`
+	if err := r.db.QueryRow(ctx, q, id).Scan(&deviceID); err != nil {
+		r.log.Info("device.r.GetDeviceApiKeyByID() 오류", zap.Error(err))
+		return "", err
+	}
+
+	return deviceID, nil
+}
+
 func (r *deviceRepository) CreateDeviceApiKey(ctx context.Context, in *domain.RawApiKey) (*domain.RawApiKey, error) {
 	var apiKey string
 	q := `INSERT INTO device.api_key(id, device_info_id, title, description) VALUES ($1, $2, $3, $4) RETURNING id;`
