@@ -15,6 +15,38 @@ type deviceUseCase struct {
 	metaSvc   domain.MetaService
 }
 
+func (uc *deviceUseCase) UpdateDeviceReqeustSchemaByID(ctx context.Context, in *domain.DeviceRequestSchema, deviceID string) error {
+	validate := util.ValidateUser{
+		Ctx:        ctx,
+		TargetRole: domain.UserRoleDevice,
+	}
+	if !validate.Exec() {
+		err := errors.New("권한이 존재하지 않습니다")
+		uc.log.Info("device.uc.UpdateDeviceReqeustSchemaByID() 오류 - 권한이 존재하지 않습니다.", zap.Error(err))
+		return err
+	}
+
+	param := &domain.RawDeviceRequestSchema{
+		ID:       in.ID,
+		DeviceID: deviceID,
+		Key:      in.Key,
+	}
+	sensorData, err := uc.metaSvc.GetSensorByParam(ctx, &domain.Sensor{Title: in.Target})
+	if err != nil {
+		uc.log.Info("device.uc.UpdateDeviceReqeustSchemaByID() 오류 - 센서 정보를 받아올 수 없습니다.", zap.Error(err))
+		return errors.New("존재하지 않는 센서입니다")
+	}
+	param.TargetSensorID = sensorData.ID
+
+	if err := uc.deviceSvc.UpdateDeviceReqeustSchemaByID(ctx, param, validate.UserID()); err != nil {
+		uc.log.Info("device.uc.UpdateDeviceReqeustSchemaByID() 오류", zap.Error(err))
+		return err
+	}
+
+	return nil
+
+}
+
 func (uc *deviceUseCase) GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string) ([]*domain.DeviceRequestSchema, error) {
 	validate := util.ValidateUser{
 		Ctx:        ctx,

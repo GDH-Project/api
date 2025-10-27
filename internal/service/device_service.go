@@ -14,11 +14,11 @@ type deviceService struct {
 	device domain.DeviceRepository
 }
 
-func (svc *deviceService) GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string, userID string) ([]*domain.DeviceRequestSchema, error) {
-	// 장비 접근 권한 체크
+// 장비 접근 권한 체크
+func (svc *deviceService) checkDeviceAccessState(ctx context.Context, deviceID, userID string) (*domain.DeviceInfo, error) {
 	deviceInfo, err := svc.device.GetDeviceInfoByID(ctx, deviceID)
 	if err != nil {
-		svc.log.Info("device.svc.UpdateDeviceInfo() 오류 - 존재 하지 않는 장비 ID 입니다",
+		svc.log.Info("device.svc.checkDeviceAccessState() 오류 - 존재 하지 않는 장비 ID 입니다",
 			zap.String("id", deviceID),
 			zap.Error(err),
 		)
@@ -26,13 +26,43 @@ func (svc *deviceService) GetDeviceReqeustSchemaListByID(ctx context.Context, de
 	}
 	if deviceInfo.UserID != userID {
 		err := errors.New("장비 데이터 접근 권한이 없습니다")
-		svc.log.Info("device.svc.UpdateDeviceInfo() 오류",
+		svc.log.Info("device.svc.checkDeviceAccessState() 오류",
 			zap.String("id", deviceID),
 			zap.String("userID", userID),
 			zap.Error(err),
 		)
 		return nil, err
 	}
+	return deviceInfo, nil
+}
+
+func (svc *deviceService) UpdateDeviceReqeustSchemaByID(ctx context.Context, in *domain.RawDeviceRequestSchema, userID string) error {
+	// 장비 접근 권한 체크
+	_, err := svc.checkDeviceAccessState(ctx, in.DeviceID, userID)
+	if err != nil {
+		svc.log.Info("device.svc.UpdateDeviceReqeustSchemaByID() 오류 - 장비 접근 권한이 없습니다.")
+		return err
+	}
+
+	if err := svc.device.UpdateDeviceRequestSchema(ctx, in); err != nil {
+		svc.log.Info("device.svc.UpdateDeviceReqeustSchemaByID() 오류 - 장비 요청 스키마 업데이트중 오류가 발생했습니다.",
+			zap.Any("data", in),
+			zap.Error(err),
+		)
+		return errors.New("장비 요청 스키마 업데이트중 오류가 발생했습니다")
+	}
+
+	return nil
+}
+
+func (svc *deviceService) GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string, userID string) ([]*domain.DeviceRequestSchema, error) {
+	// 장비 접근 권한 체크
+	_, err := svc.checkDeviceAccessState(ctx, deviceID, userID)
+	if err != nil {
+		svc.log.Info("device.svc.UpdateDeviceInfo() 오류 - 장비 접근 권한이 없습니다.")
+		return nil, err
+	}
+
 	// --- 권한 체크 완료 ---
 
 	// --- 데이터 조회 ---

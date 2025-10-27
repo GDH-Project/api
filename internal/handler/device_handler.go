@@ -153,7 +153,7 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		huma.Operation{
 			OperationID:   "v1DeviceGetMyDeviceInfoByID",
 			Method:        http.MethodGet,
-			Path:          "/device/{id}",
+			Path:          "/device/{device_id}",
 			Summary:       "장치 정보 조회 By ID",
 			Description:   "장치 정보 조회 By ID API 입니다.",
 			Tags:          []string{"Device"},
@@ -161,7 +161,7 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		},
 		domain.UserRoleDevice,
 	), func(ctx context.Context, i *struct {
-		DeviceID string `path:"id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
 	}) (*deviceInfoResponse, error) {
 		var resp deviceInfoResponse
 		data, err := deviceUseCase.GetDeviceInfoByID(ctx, i.DeviceID)
@@ -179,7 +179,7 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		huma.Operation{
 			OperationID:   "v1DeviceUpdateMyDeviceInfoByID",
 			Method:        http.MethodPut,
-			Path:          "/device/{id}",
+			Path:          "/device/{device_id}",
 			Summary:       "장치 정보 업데이트 By ID",
 			Description:   "장치 정보 업데이트 By ID API 입니다.",
 			Tags:          []string{"Device"},
@@ -187,7 +187,7 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		},
 		domain.UserRoleDevice,
 	), func(ctx context.Context, i *struct {
-		DeviceID string `path:"id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
 		Body     struct {
 			Title       string `json:"title,omitempty" minLength:"5" doc:"장치의 이름 입니다. 검색 시 노출되는 이름 입니다." example:"경기도 안양시 토마토 스마트팜"`
 			Name        string `json:"name,omitempty" doc:"장치 등록자만 확인 가능한 값입니다. 개인의 장치 식별에 사용하면 됩니다." example:"A-B1 섹터 3구역"`
@@ -211,9 +211,9 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 
 	huma.Register(v1, m.WithAuth(
 		huma.Operation{
-			OperationID:   "v1DeviceGetDeviceReqeustSchemaByID",
+			OperationID:   "v1DeviceGetDeviceReqeustSchemaByDeviceID",
 			Method:        http.MethodGet,
-			Path:          "/device/{id}/schema",
+			Path:          "/device/{device_id}/schema",
 			Summary:       "장치 요청 스키마 리스트 조회 By ID",
 			Description:   "장치 요청 스키마 리스트 조회 By ID API 입니다.",
 			Tags:          []string{"Device"},
@@ -221,7 +221,7 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		},
 		domain.UserRoleDevice,
 	), func(ctx context.Context, i *struct {
-		DeviceID string `path:"id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
 	}) (*deviceRequestSchemaListResponse, error) {
 		var resp deviceRequestSchemaListResponse
 
@@ -233,5 +233,38 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		resp.Body.Data = schemaList
 		return &resp, nil
 	})
+
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceUpdateDeviceReqeustSchemaByDeviceIDAndSchemaID",
+			Method:        http.MethodPut,
+			Path:          "/device/{device_id}/schema/{schema_id}",
+			Summary:       "장치 요청 스키마 수정 By ID",
+			Description:   "장치 요청 스키마 수정 By ID API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusOK,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+		SchemaID int    `path:"schema_id" doc:"요청 스키마 ID 입니다."`
+		Body     struct {
+			Key    string `json:"key" doc:"바인딩할 요청시 JSON 키 입니다." example:"temp"`
+			Target string `json:"target" doc:"바인딩할 key -> sensor title 입니다." example:"기온"`
+		}
+	}) (*struct{}, error) {
+		var param domain.DeviceRequestSchema
+		param.ID = i.SchemaID
+		param.Key = i.Body.Key
+		param.Target = i.Body.Target
+
+		if err := deviceUseCase.UpdateDeviceReqeustSchemaByID(ctx, &param, i.DeviceID); err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		return nil, nil
+	})
+
+	log.Info("Device Handler 등록")
 
 }
