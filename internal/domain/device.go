@@ -19,7 +19,7 @@ type DeviceRepository interface {
 	// UpdateDeviceInfo 장치 정보 업데이트
 	UpdateDeviceInfo(ctx context.Context, in *RawDeviceInfo) error
 	// DeleteDeviceInfoByID 장비 제거
-	DeleteDeviceInfoByID(ctx context.Context, id string) error
+	DeleteDeviceInfoByID(ctx context.Context, id string, userID string) error
 	// CreateDeviceReqeustSchemaListTx req_to_sensor 에 삽입되는 디바이스 응답(JSON) 키와 센서를 연결하는 부분
 	CreateDeviceReqeustSchemaListTx(ctx context.Context, tx pgx.Tx, deviceID string, schemas []*RawDeviceRequestSchema) error
 	GetDeviceRequestSchemaListByDeviceID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
@@ -35,6 +35,7 @@ type DeviceService interface {
 	UpdateDeviceInfo(ctx context.Context, in *RawDeviceInfo) error
 	GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string, userID string) ([]*DeviceRequestSchema, error)
 	UpdateDeviceReqeustSchemaByID(ctx context.Context, in *RawDeviceRequestSchema, userID string) error
+	DeleteDeviceInfoByID(ctx context.Context, deviceID string, userID string) error
 }
 
 type DeviceUseCase interface {
@@ -45,6 +46,7 @@ type DeviceUseCase interface {
 
 	GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
 	UpdateDeviceReqeustSchemaByID(ctx context.Context, in *DeviceRequestSchema, deviceID string) error
+	DeleteDeviceInfoByID(ctx context.Context, deviceID string) error
 }
 
 // DeviceData

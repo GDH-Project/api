@@ -15,14 +15,43 @@ type deviceUseCase struct {
 	metaSvc   domain.MetaService
 }
 
-func (uc *deviceUseCase) UpdateDeviceReqeustSchemaByID(ctx context.Context, in *domain.DeviceRequestSchema, deviceID string) error {
-	validate := util.ValidateUser{
+func (uc *deviceUseCase) validateUser(ctx context.Context, role domain.UserRole) (*util.ValidateUser, error) {
+	validate := &util.ValidateUser{
 		Ctx:        ctx,
 		TargetRole: domain.UserRoleDevice,
 	}
 	if !validate.Exec() {
 		err := errors.New("권한이 존재하지 않습니다")
-		uc.log.Info("device.uc.UpdateDeviceReqeustSchemaByID() 오류 - 권한이 존재하지 않습니다.", zap.Error(err))
+		uc.log.Info("device.uc.validateUser() 오류 - 권한이 존재하지 않습니다.", zap.Error(err))
+		return nil, err
+	}
+	return validate, nil
+}
+func (uc *deviceUseCase) DeleteDeviceInfoByID(ctx context.Context, deviceID string) error {
+	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
+	if err != nil {
+		return err
+	}
+
+	userID := validate.UserID()
+
+	_, err = uc.deviceSvc.GetDeviceInfoByID(ctx, deviceID, userID)
+	if err != nil {
+		uc.log.Info("device.uc.DeleteDeviceInfoByID() 오류", zap.Error(err))
+		return errors.New("장치 정보를 불러올 수 없습니다")
+	}
+
+	if err := uc.deviceSvc.DeleteDeviceInfoByID(ctx, deviceID, userID); err != nil {
+		uc.log.Info("device.uc.DeleteDeviceInfoByID() 오류", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (uc *deviceUseCase) UpdateDeviceReqeustSchemaByID(ctx context.Context, in *domain.DeviceRequestSchema, deviceID string) error {
+	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
+	if err != nil {
 		return err
 	}
 
@@ -48,13 +77,8 @@ func (uc *deviceUseCase) UpdateDeviceReqeustSchemaByID(ctx context.Context, in *
 }
 
 func (uc *deviceUseCase) GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string) ([]*domain.DeviceRequestSchema, error) {
-	validate := util.ValidateUser{
-		Ctx:        ctx,
-		TargetRole: domain.UserRoleDevice,
-	}
-	if !validate.Exec() {
-		err := errors.New("권한이 존재하지 않습니다")
-		uc.log.Info("device.uc.GetDeviceReqeustSchemaListByID() 오류 - 권한이 존재하지 않습니다.", zap.Error(err))
+	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
+	if err != nil {
 		return nil, err
 	}
 
@@ -68,13 +92,8 @@ func (uc *deviceUseCase) GetDeviceReqeustSchemaListByID(ctx context.Context, dev
 }
 
 func (uc *deviceUseCase) UpdateDeviceInfo(ctx context.Context, in *domain.DeviceInfo) error {
-	validate := util.ValidateUser{
-		Ctx:        ctx,
-		TargetRole: domain.UserRoleDevice,
-	}
-	if !validate.Exec() {
-		err := errors.New("권한이 존재하지 않습니다")
-		uc.log.Info("device.uc.UpdateDeviceInfo() 오류 - 권한이 존재하지 않습니다.", zap.Error(err))
+	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
+	if err != nil {
 		return err
 	}
 
@@ -115,13 +134,8 @@ func (uc *deviceUseCase) UpdateDeviceInfo(ctx context.Context, in *domain.Device
 }
 
 func (uc *deviceUseCase) GetDeviceInfoByID(ctx context.Context, id string) (*domain.DeviceInfo, error) {
-	validate := util.ValidateUser{
-		Ctx:        ctx,
-		TargetRole: domain.UserRoleDevice,
-	}
-	if !validate.Exec() {
-		err := errors.New("권한이 존재하지 않습니다")
-		uc.log.Info("device.uc.GetDeviceInfoByID() 오류 - 권한이 존재하지 않습니다.", zap.Error(err))
+	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
+	if err != nil {
 		return nil, err
 	}
 
@@ -134,14 +148,8 @@ func (uc *deviceUseCase) GetDeviceInfoByID(ctx context.Context, id string) (*dom
 }
 
 func (uc *deviceUseCase) GetDeviceInfoListByParamAndPage(ctx context.Context, in *domain.DeviceInfo, page *domain.Page) ([]*domain.DeviceInfo, *domain.Page, error) {
-	// 사용자 권한 체크
-	validate := util.ValidateUser{
-		Ctx:        ctx,
-		TargetRole: domain.UserRoleDevice,
-	}
-	if !validate.Exec() {
-		err := errors.New("권한이 존재하지 않습니다")
-		uc.log.Info("device.uc.CreateDeviceInfo() 오류 - 권한이 존재하지 않습니다.", zap.Error(err))
+	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
+	if err != nil {
 		return nil, nil, err
 	}
 
@@ -158,22 +166,15 @@ func (uc *deviceUseCase) GetDeviceInfoListByParamAndPage(ctx context.Context, in
 }
 
 func (uc *deviceUseCase) CreateDevice(ctx context.Context, deviceInfoData *domain.DeviceInfo, deviceSchemaDataList []*domain.DeviceRequestSchema) error {
-	// 사용자 권한 체크
-	validateUser := util.ValidateUser{
-		Ctx:        ctx,
-		TargetRole: domain.UserRoleDevice,
-	}
-
-	if !validateUser.Exec() {
-		err := errors.New("권한이 존재하지 않습니다")
-		uc.log.Info("device.uc.CreateDeviceInfo() 오류 - 권한이 존재하지 않습니다.", zap.Error(err))
+	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
+	if err != nil {
 		return err
 	}
 
 	var rawDeviceInfo domain.RawDeviceInfo
 	var rawDeviceRequestSchemaList []*domain.RawDeviceRequestSchema
 
-	rawDeviceInfo.UserID = validateUser.UserID()
+	rawDeviceInfo.UserID = validate.UserID()
 	rawDeviceInfo.Title = deviceInfoData.Title
 	rawDeviceInfo.Name = *deviceInfoData.Name
 

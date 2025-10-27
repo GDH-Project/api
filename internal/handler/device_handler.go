@@ -234,6 +234,7 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		return &resp, nil
 	})
 
+	// 장치 요청 스키마 수정 By ID API
 	huma.Register(v1, m.WithAuth(
 		huma.Operation{
 			OperationID:   "v1DeviceUpdateDeviceReqeustSchemaByDeviceIDAndSchemaID",
@@ -265,6 +266,26 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		return nil, nil
 	})
 
-	log.Info("Device Handler 등록")
+	// 장치 정보 제거 By ID API
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceDeleteDeviceInfoByID",
+			Method:        http.MethodDelete,
+			Path:          "/device/{device_id}",
+			Summary:       "장치 정보 제거 By ID",
+			Description:   "장치 정보 제거 By ID API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusOK,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+	}) (*struct{}, error) {
+		if err := deviceUseCase.DeleteDeviceInfoByID(ctx, i.DeviceID); err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+		return nil, nil
+	})
 
+	log.Info("Device Handler 등록")
 }

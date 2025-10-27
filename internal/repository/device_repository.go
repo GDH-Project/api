@@ -160,10 +160,20 @@ func (r *deviceRepository) CreateDeviceReqeustSchemaListTx(ctx context.Context, 
 	return nil
 }
 
-func (r *deviceRepository) DeleteDeviceInfoByID(ctx context.Context, id string) error {
+func (r *deviceRepository) DeleteDeviceInfoByID(ctx context.Context, id string, userID string) error {
 	var successID string
-	q := `UPDATE device.device_info SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1::uuid RETURNING id;`
-	if err := r.db.QueryRow(ctx, q, id).Scan(&successID); err != nil {
+	q := `
+			UPDATE device.device_info
+			SET deleted_at = NOW()
+			WHERE 
+			    deleted_at IS NULL 
+			  AND 
+			    id = $1::uuid 
+			  AND 
+			    user_id = $2::uuid
+			RETURNING id;
+		`
+	if err := r.db.QueryRow(ctx, q, id, userID).Scan(&successID); err != nil {
 		r.log.Error("device.r.DeleteDeviceInfoByID() 오류", zap.String("id", id), zap.Error(err))
 		return err
 	}

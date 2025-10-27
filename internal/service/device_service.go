@@ -14,6 +14,14 @@ type deviceService struct {
 	device domain.DeviceRepository
 }
 
+func (svc *deviceService) DeleteDeviceInfoByID(ctx context.Context, deviceID string, userID string) error {
+	if err := svc.device.DeleteDeviceInfoByID(ctx, deviceID, userID); err != nil {
+		svc.log.Info("device.svc.DeleteDeviceInfoByID() 오류", zap.Error(err))
+		return errors.New("장비 데이터 제거에 실패했습니다")
+	}
+	return nil
+}
+
 // 장비 접근 권한 체크
 func (svc *deviceService) checkDeviceAccessState(ctx context.Context, deviceID, userID string) (*domain.DeviceInfo, error) {
 	deviceInfo, err := svc.device.GetDeviceInfoByID(ctx, deviceID)
