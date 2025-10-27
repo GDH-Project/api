@@ -15,6 +15,53 @@ type deviceUseCase struct {
 	metaSvc   domain.MetaService
 }
 
+func (uc *deviceUseCase) UpdateDeviceInfo(ctx context.Context, in *domain.DeviceInfo) error {
+	validate := util.ValidateUser{
+		Ctx:        ctx,
+		TargetRole: domain.UserRoleDevice,
+	}
+	if !validate.Exec() {
+		err := errors.New("권한이 존재하지 않습니다")
+		uc.log.Info("device.uc.UpdateDeviceInfo() 오류 - 권한이 존재하지 않습니다.", zap.Error(err))
+		return err
+	}
+
+	rawInfo := &domain.RawDeviceInfo{
+		ID:     in.ID,
+		UserID: validate.UserID(),
+		Title:  in.Title,
+		Name:   *in.Name,
+	}
+
+	if in.UpdateCycle > 0 {
+		updateCycleList, err := uc.metaSvc.GetUpdateCycleList(ctx)
+		if err != nil {
+			uc.log.Info("device.uc.UpdateDeviceInfo() 오류", zap.Error(err))
+			return errors.New("갱신 주기를 받아올 수 없습니다")
+		}
+
+		for _, item := range updateCycleList {
+			if item.Interval == in.UpdateCycle {
+				rawInfo.UpdateCycleID = item.ID
+				break
+			}
+		}
+
+		if rawInfo.UpdateCycleID == 0 {
+			err := errors.New("갱신 주기가 유효하지 않습니다")
+			uc.log.Info("device.uc.UpdateDeviceInfo() 오류", zap.Error(err))
+			return err
+		}
+	}
+
+	if err := uc.deviceSvc.UpdateDeviceInfo(ctx, rawInfo); err != nil {
+		uc.log.Info("device.uc.UpdateDeviceInfo() 오류", zap.Error(err))
+		return errors.New("유저 정보를 업데이트 하는 도중 오류가 발생했습니다")
+	}
+
+	return nil
+}
+
 func (uc *deviceUseCase) GetDeviceInfoByID(ctx context.Context, id string) (*domain.DeviceInfo, error) {
 	validate := util.ValidateUser{
 		Ctx:        ctx,

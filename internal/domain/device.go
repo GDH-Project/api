@@ -32,12 +32,14 @@ type DeviceService interface {
 	CreateDevice(ctx context.Context, deviceInfoData *RawDeviceInfo, deviceSchemaDataList []*RawDeviceRequestSchema) error
 	GetDeviceInfoListByParamAndPage(ctx context.Context, in *DeviceInfo, page *Page) ([]*DeviceInfo, *Page, error)
 	GetDeviceInfoByID(ctx context.Context, id string, userID string) (*DeviceInfo, error)
+	UpdateDeviceInfo(ctx context.Context, in *RawDeviceInfo) error
 }
 
 type DeviceUseCase interface {
 	CreateDevice(ctx context.Context, deviceInfoData *DeviceInfo, deviceSchemaDataList []*DeviceRequestSchema) error
 	GetDeviceInfoListByParamAndPage(ctx context.Context, in *DeviceInfo, page *Page) ([]*DeviceInfo, *Page, error)
 	GetDeviceInfoByID(ctx context.Context, id string) (*DeviceInfo, error)
+	UpdateDeviceInfo(ctx context.Context, in *DeviceInfo) error
 }
 
 // DeviceData

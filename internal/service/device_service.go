@@ -12,7 +12,19 @@ import (
 type deviceService struct {
 	log    *zap.Logger
 	device domain.DeviceRepository
-	meta   domain.MetaRepository
+}
+
+func (svc *deviceService) UpdateDeviceInfo(ctx context.Context, in *domain.RawDeviceInfo) error {
+
+	if err := svc.device.UpdateDeviceInfo(ctx, in); err != nil {
+		svc.log.Info("device.svc.UpdateDeviceInfo() 오류",
+			zap.Any("data", in),
+			zap.Error(err),
+		)
+		return errors.New("장비 정보를 업데이트 하는 도중 오류가 발생했습니다")
+	}
+
+	return nil
 }
 
 func (svc *deviceService) GetDeviceInfoByID(ctx context.Context, id string, userID string) (*domain.DeviceInfo, error) {
