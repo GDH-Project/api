@@ -228,14 +228,45 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		return nil, nil
 	})
 
-	// 장치 요청 스키마 조회 API
+	// 장치 요청 스키마 생성 API
 	huma.Register(v1, m.WithAuth(
 		huma.Operation{
-			OperationID:   "v1DeviceGetDeviceReqeustSchemaByDeviceID",
+			OperationID:   "v1DeviceCreateDeviceReqeustSchemaByDeviceID",
+			Method:        http.MethodPost,
+			Path:          "/device/{device_id}/schema",
+			Summary:       "장치 요청 스키마 생성",
+			Description:   "장치 요청 스키마 생성 API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusCreated,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+		Body     struct {
+			Key    string `json:"key" doc:"장치에서 보내는 데이터 JSON의 키값 입니다." example:"soil_temp"`
+			Target string `json:"target" doc:"지정한 키를 바인딩 할 센서 명칭 입니다." example:"토양 온도"`
+		}
+	}) (*struct{}, error) {
+		var param domain.DeviceRequestSchema
+
+		param.Key = i.Body.Key
+		param.Target = i.Body.Target
+
+		if err := deviceUseCase.CreateDeviceReqeustSchema(ctx, i.DeviceID, &param); err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		return nil, nil
+	})
+
+	// 장치 요청 스키마 리스트 조회 API
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceGetDeviceReqeustSchemaListByDeviceID",
 			Method:        http.MethodGet,
 			Path:          "/device/{device_id}/schema",
-			Summary:       "장치 요청 스키마 리스트 조회 By ID",
-			Description:   "장치 요청 스키마 리스트 조회 By ID API 입니다.",
+			Summary:       "장치 요청 스키마 리스트 조회 By DeviceID",
+			Description:   "장치 요청 스키마 리스트 조회 By DeviceID API 입니다.",
 			Tags:          []string{"Device"},
 			DefaultStatus: http.StatusOK,
 		},

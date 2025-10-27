@@ -15,6 +15,38 @@ type deviceUseCase struct {
 	metaSvc   domain.MetaService
 }
 
+func (uc *deviceUseCase) CreateDeviceReqeustSchema(ctx context.Context, deviceID string, in *domain.DeviceRequestSchema) error {
+	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
+	if err != nil {
+		return err
+	}
+
+	_, err = uc.deviceSvc.GetDeviceInfoByID(ctx, deviceID, validate.UserID())
+	if err != nil {
+		uc.log.Info("device.uc.validateUser() 오류 - 장치 정보를 불러올 수 없습니다.", zap.Error(err))
+		return errors.New("장치 정보를 불러울 수 없습니다")
+	}
+
+	sensorInfo, err := uc.metaSvc.GetSensorByParam(ctx, &domain.Sensor{Title: in.Target})
+	if err != nil {
+		uc.log.Info("device.uc.validateUser() 오류 - 센서 정보를 불러올 수 없습니다.", zap.Error(err))
+		return errors.New("센서 정보를 불러울 수 없습니다")
+	}
+
+	param := &domain.RawDeviceRequestSchema{
+		DeviceID:       deviceID,
+		Key:            in.Key,
+		TargetSensorID: sensorInfo.ID,
+	}
+
+	if err := uc.deviceSvc.CreateDeviceReqeustSchema(ctx, param); err != nil {
+		uc.log.Info("device.uc.validateUser() 오류 - 장치 요청 데이터를 생성할 수 없습니다..", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
 func (uc *deviceUseCase) validateUser(ctx context.Context, role domain.UserRole) (*util.ValidateUser, error) {
 	validate := &util.ValidateUser{
 		Ctx:        ctx,

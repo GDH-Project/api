@@ -14,6 +14,20 @@ type deviceService struct {
 	device domain.DeviceRepository
 }
 
+func (svc *deviceService) CreateDeviceReqeustSchema(ctx context.Context, in *domain.RawDeviceRequestSchema) error {
+	if err := svc.device.WithTransaction(ctx, func(tx pgx.Tx) error {
+		if err := svc.device.CreateDeviceReqeustSchemaListTx(ctx, tx, in.DeviceID, []*domain.RawDeviceRequestSchema{in}); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		svc.log.Info("device.svc.CreateDeviceReqeustSchema() 오류", zap.Error(err))
+		return errors.New("장치 요청 스키마 생성에 실패했습니다")
+	}
+
+	return nil
+}
+
 func (svc *deviceService) DeleteDeviceInfoByID(ctx context.Context, deviceID string, userID string) error {
 	if err := svc.device.DeleteDeviceInfoByID(ctx, deviceID, userID); err != nil {
 		svc.log.Info("device.svc.DeleteDeviceInfoByID() 오류", zap.Error(err))

@@ -36,6 +36,7 @@ type DeviceService interface {
 	GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string, userID string) ([]*DeviceRequestSchema, error)
 	UpdateDeviceReqeustSchemaByID(ctx context.Context, in *RawDeviceRequestSchema, userID string) error
 	DeleteDeviceInfoByID(ctx context.Context, deviceID string, userID string) error
+	CreateDeviceReqeustSchema(ctx context.Context, in *RawDeviceRequestSchema) error
 }
 
 type DeviceUseCase interface {
@@ -47,6 +48,8 @@ type DeviceUseCase interface {
 	GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
 	UpdateDeviceReqeustSchemaByID(ctx context.Context, in *DeviceRequestSchema, deviceID string) error
 	DeleteDeviceInfoByID(ctx context.Context, deviceID string) error
+
+	CreateDeviceReqeustSchema(ctx context.Context, deviceID string, in *DeviceRequestSchema) error
 }
 
 // DeviceData
