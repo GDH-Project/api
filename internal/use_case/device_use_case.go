@@ -2,6 +2,9 @@ package usecase
 
 import (
 	"context"
+	"crypto/rand"
+	"database/sql"
+	"encoding/base64"
 	"errors"
 
 	"github.com/GDH-Project/api/internal/domain"
@@ -15,6 +18,50 @@ type deviceUseCase struct {
 	metaSvc   domain.MetaService
 }
 
+func (uc *deviceUseCase) CreateDeviceApiKey(ctx context.Context, in *domain.ApiKey) (*domain.ApiKey, error) {
+	// 유저 권한 확인
+	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
+	if err != nil {
+		return nil, err
+	}
+
+	// 장비 접근 권한 확인
+	_, err = uc.deviceSvc.GetDeviceInfoByID(ctx, in.DeviceID, validate.UserID())
+	if err != nil {
+		uc.log.Info("device.uc.GetDeviceInfoByID() 오류 - 장치 정보를 불러올 수 없습니다.", zap.Error(err))
+		return nil, errors.New("장치 정보를 불러울 수 없습니다")
+	}
+
+	// 32바이트 문자열 생성
+	b := make([]byte, 24) // 24 -> base64 인코딩시 32자리
+	if _, err := rand.Read(b); err != nil {
+		uc.log.Info("device.uc.GetDeviceInfoByID() 오류 - 32바아트 문자열 생성 살패", zap.Error(err))
+		return nil, err
+	}
+	key := base64.URLEncoding.EncodeToString(b)
+
+	param := &domain.RawApiKey{
+		ID:       key,
+		DeviceID: in.DeviceID,
+		Title:    in.Title,
+		Desc: sql.NullString{
+			String: in.Desc,
+			Valid:  in.Desc != "",
+		},
+	}
+
+	data, err := uc.deviceSvc.CreateDeviceApiKey(ctx, param)
+	if err != nil {
+		uc.log.Info("device.uc.GetDeviceInfoByID() 오류 - API키 생성 실패",
+			zap.Any("data", param),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	return data, nil
+}
+
 func (uc *deviceUseCase) CreateDeviceReqeustSchema(ctx context.Context, deviceID string, in *domain.DeviceRequestSchema) error {
 	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
 	if err != nil {
@@ -23,13 +70,13 @@ func (uc *deviceUseCase) CreateDeviceReqeustSchema(ctx context.Context, deviceID
 
 	_, err = uc.deviceSvc.GetDeviceInfoByID(ctx, deviceID, validate.UserID())
 	if err != nil {
-		uc.log.Info("device.uc.validateUser() 오류 - 장치 정보를 불러올 수 없습니다.", zap.Error(err))
+		uc.log.Info("device.uc.CreateDeviceReqeustSchema() 오류 - 장치 정보를 불러올 수 없습니다.", zap.Error(err))
 		return errors.New("장치 정보를 불러울 수 없습니다")
 	}
 
 	sensorInfo, err := uc.metaSvc.GetSensorByParam(ctx, &domain.Sensor{Title: in.Target})
 	if err != nil {
-		uc.log.Info("device.uc.validateUser() 오류 - 센서 정보를 불러올 수 없습니다.", zap.Error(err))
+		uc.log.Info("device.uc.CreateDeviceReqeustSchema() 오류 - 센서 정보를 불러올 수 없습니다.", zap.Error(err))
 		return errors.New("센서 정보를 불러울 수 없습니다")
 	}
 
@@ -40,7 +87,7 @@ func (uc *deviceUseCase) CreateDeviceReqeustSchema(ctx context.Context, deviceID
 	}
 
 	if err := uc.deviceSvc.CreateDeviceReqeustSchema(ctx, param); err != nil {
-		uc.log.Info("device.uc.validateUser() 오류 - 장치 요청 데이터를 생성할 수 없습니다..", zap.Error(err))
+		uc.log.Info("device.uc.CreateDeviceReqeustSchema() 오류 - 장치 요청 데이터를 생성할 수 없습니다..", zap.Error(err))
 		return err
 	}
 

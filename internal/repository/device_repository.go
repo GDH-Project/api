@@ -17,6 +17,33 @@ type deviceRepository struct {
 	db  *pgxpool.Pool
 }
 
+func (r *deviceRepository) CreateDeviceApiKey(ctx context.Context, in *domain.RawApiKey) (*domain.RawApiKey, error) {
+	var apiKey string
+	q := `INSERT INTO device.api_key(id, device_info_id, title, description) VALUES ($1, $2, $3, $4) RETURNING id;`
+	if err := r.db.QueryRow(ctx, q,
+		in.ID,
+		in.DeviceID,
+		in.Title,
+		in.Desc,
+	).Scan(&apiKey); err != nil {
+		r.log.Info("device.r.CreateDeviceApiKey() 오류", zap.Error(err))
+		return nil, err
+	}
+
+	// 생성후 반환된 API키가 전달된 키와 일치하지 않는 경우 --> 사실상 인서트 실패
+	if apiKey != in.ID {
+		err := errors.New("API키 생성에 실패했습니다")
+		r.log.Info("device.r.CreateDeviceApiKey() 오류",
+			zap.Any("apiKey", in.ID),
+			zap.Any("data", in),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	return in, nil
+}
+
 func (r *deviceRepository) DeleteDeviceRequestSchemaByID(ctx context.Context, id int) error {
 	var successID int
 	q := `DELETE FROM device.req_to_sensor WHERE id = $1 RETURNING id;`

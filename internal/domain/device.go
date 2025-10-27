@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -26,6 +27,7 @@ type DeviceRepository interface {
 	GetDeviceRequestSchemaByID(ctx context.Context, id int) (*DeviceRequestSchema, error)
 	UpdateDeviceRequestSchema(ctx context.Context, in *RawDeviceRequestSchema) error
 	DeleteDeviceRequestSchemaByID(ctx context.Context, id int) error
+	CreateDeviceApiKey(ctx context.Context, in *RawApiKey) (*RawApiKey, error)
 }
 
 type DeviceService interface {
@@ -37,6 +39,7 @@ type DeviceService interface {
 	UpdateDeviceReqeustSchemaByID(ctx context.Context, in *RawDeviceRequestSchema, userID string) error
 	DeleteDeviceInfoByID(ctx context.Context, deviceID string, userID string) error
 	CreateDeviceReqeustSchema(ctx context.Context, in *RawDeviceRequestSchema) error
+	CreateDeviceApiKey(ctx context.Context, in *RawApiKey) (*ApiKey, error)
 }
 
 type DeviceUseCase interface {
@@ -50,6 +53,7 @@ type DeviceUseCase interface {
 	DeleteDeviceInfoByID(ctx context.Context, deviceID string) error
 
 	CreateDeviceReqeustSchema(ctx context.Context, deviceID string, in *DeviceRequestSchema) error
+	CreateDeviceApiKey(ctx context.Context, in *ApiKey) (*ApiKey, error)
 }
 
 // DeviceData
@@ -102,4 +106,18 @@ type DeviceInfo struct {
 
 	CreatedAt time.Time `json:"created_at" doc:"최초 장치 등록 시간 입니다." example:"2025-10-24 22:54:52.874221 +09:00"`
 	UpdatedAt time.Time `json:"updated_at" doc:"장치 정보 업데이트 시간 입니다." example:"2025-10-24 22:54:52.874221 +09:00"`
+}
+
+type RawApiKey struct {
+	ID       string         `json:"-"` // 32자리 문자열로 직접 생성
+	DeviceID string         `json:"device_id"`
+	Title    string         `json:"title"`
+	Desc     sql.NullString `json:"desc"`
+}
+
+type ApiKey struct {
+	Key      string `json:"-"`
+	DeviceID string `json:"device_id" doc:"장치 고유 ID 입니다."`
+	Title    string `json:"title" maxLength:"50" doc:"API 키에 대한 이름 입니다." example:"경기도 안양시 토마토 농장 A-B1 섹터 센서"`
+	Desc     string `json:"desc,omitempty" doc:"API 키에 대한 셜명입니다." example:"2층 토마토 센서"`
 }

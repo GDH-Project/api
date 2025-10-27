@@ -36,6 +36,13 @@ type deviceRequestSchemaListResponse struct {
 	}
 }
 
+type firstDeviceApiKeyResponse struct {
+	Body struct {
+		domain.ApiKey
+		Key string `json:"key" doc:"Api 키 입니다. 최초 한번만 확인 할 수 있습니다."`
+	}
+}
+
 func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.DeviceUseCase, m middleware.Middleware) {
 	v1 := huma.NewGroup(api, "/api/v1")
 
@@ -315,6 +322,45 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		}
 
 		return nil, nil
+	})
+
+	// 장치 API 키 생성 API
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceCreateApiKeyByDeviceID",
+			Method:        http.MethodPost,
+			Path:          "/device/{device_id}/api-key",
+			Summary:       "장치 Api Key 생성 By ID",
+			Description:   "장치 Api Key 생성 By ID API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusCreated,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+		Body     struct {
+			Title string `json:"title" maxLength:"40" doc:"사용자가 API키 식별에 사용되는 값입니다." example:"안양시 토마토 농장"`
+			Desc  string `json:"desc,omitempty" doc:"사용자가 추가로 남길 API키에 대한 설명입니다." example:"A-B1 섹터 2층 1번 센서"`
+		}
+	}) (*firstDeviceApiKeyResponse, error) {
+		var resp firstDeviceApiKeyResponse
+
+		param := &domain.ApiKey{
+			DeviceID: i.DeviceID,
+			Title:    i.Body.Title,
+			Desc:     i.Body.Desc,
+		}
+		data, err := deviceUseCase.CreateDeviceApiKey(ctx, param)
+		if err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		resp.Body.Key = data.Key
+		resp.Body.DeviceID = i.DeviceID
+		resp.Body.Title = i.Body.Title
+		resp.Body.Desc = i.Body.Desc
+
+		return &resp, nil
 	})
 
 	log.Info("Device Handler 등록")

@@ -14,6 +14,23 @@ type deviceService struct {
 	device domain.DeviceRepository
 }
 
+func (svc *deviceService) CreateDeviceApiKey(ctx context.Context, in *domain.RawApiKey) (*domain.ApiKey, error) {
+
+	data, err := svc.device.CreateDeviceApiKey(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+
+	apiKey := &domain.ApiKey{
+		Key:      data.ID,
+		DeviceID: data.DeviceID,
+		Title:    data.Title,
+		Desc:     data.Desc.String,
+	}
+
+	return apiKey, nil
+}
+
 func (svc *deviceService) CreateDeviceReqeustSchema(ctx context.Context, in *domain.RawDeviceRequestSchema) error {
 	if err := svc.device.WithTransaction(ctx, func(tx pgx.Tx) error {
 		if err := svc.device.CreateDeviceReqeustSchemaListTx(ctx, tx, in.DeviceID, []*domain.RawDeviceRequestSchema{in}); err != nil {
