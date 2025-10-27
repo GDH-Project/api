@@ -33,6 +33,7 @@ type DeviceService interface {
 	GetDeviceInfoListByParamAndPage(ctx context.Context, in *DeviceInfo, page *Page) ([]*DeviceInfo, *Page, error)
 	GetDeviceInfoByID(ctx context.Context, id string, userID string) (*DeviceInfo, error)
 	UpdateDeviceInfo(ctx context.Context, in *RawDeviceInfo) error
+	GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string, userID string) ([]*DeviceRequestSchema, error)
 }
 
 type DeviceUseCase interface {
@@ -40,6 +41,8 @@ type DeviceUseCase interface {
 	GetDeviceInfoListByParamAndPage(ctx context.Context, in *DeviceInfo, page *Page) ([]*DeviceInfo, *Page, error)
 	GetDeviceInfoByID(ctx context.Context, id string) (*DeviceInfo, error)
 	UpdateDeviceInfo(ctx context.Context, in *DeviceInfo) error
+
+	GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
 }
 
 // DeviceData

@@ -15,6 +15,26 @@ type deviceUseCase struct {
 	metaSvc   domain.MetaService
 }
 
+func (uc *deviceUseCase) GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string) ([]*domain.DeviceRequestSchema, error) {
+	validate := util.ValidateUser{
+		Ctx:        ctx,
+		TargetRole: domain.UserRoleDevice,
+	}
+	if !validate.Exec() {
+		err := errors.New("권한이 존재하지 않습니다")
+		uc.log.Info("device.uc.GetDeviceReqeustSchemaListByID() 오류 - 권한이 존재하지 않습니다.", zap.Error(err))
+		return nil, err
+	}
+
+	list, err := uc.deviceSvc.GetDeviceReqeustSchemaListByID(ctx, deviceID, validate.UserID())
+	if err != nil {
+		uc.log.Info("device.uc.GetDeviceReqeustSchemaListByID() 오류", zap.Error(err))
+		return nil, errors.New("장비 스키마 정보를 불러올 수 없습니다")
+	}
+
+	return list, nil
+}
+
 func (uc *deviceUseCase) UpdateDeviceInfo(ctx context.Context, in *domain.DeviceInfo) error {
 	validate := util.ValidateUser{
 		Ctx:        ctx,
