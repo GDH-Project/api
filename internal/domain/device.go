@@ -28,8 +28,9 @@ type DeviceRepository interface {
 	UpdateDeviceRequestSchema(ctx context.Context, in *RawDeviceRequestSchema) error
 	DeleteDeviceRequestSchemaByID(ctx context.Context, id int) error
 	CreateDeviceApiKey(ctx context.Context, in *RawApiKey) (*RawApiKey, error)
-	// GetDeviceApiKeyByID 반환되는 값은 장치 ID 이다.
-	GetDeviceApiKeyByID(ctx context.Context, id string) (string, error)
+	// GetDeviceApiKeyByApiKey 반환되는 값은 장치 ID 이다.
+	GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error)
+	// GetDeviceApiKeyListByID(ctx context.Context, id string) ([]*RawApiKey, error)
 }
 
 type DeviceService interface {
@@ -42,8 +43,8 @@ type DeviceService interface {
 	DeleteDeviceInfoByID(ctx context.Context, deviceID string, userID string) error
 	CreateDeviceReqeustSchema(ctx context.Context, in *RawDeviceRequestSchema) error
 	CreateDeviceApiKey(ctx context.Context, in *RawApiKey) (*ApiKey, error)
-	// GetDeviceApiKeyByID 반횐되는 값은 장치 ID 이다.
-	GetDeviceApiKeyByID(ctx context.Context, apiKey string) (string, error)
+	// GetDeviceApiKeyByApiKey 반횐되는 값은 장치 ID 이다.
+	GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error)
 }
 
 type DeviceUseCase interface {
@@ -58,8 +59,8 @@ type DeviceUseCase interface {
 
 	CreateDeviceReqeustSchema(ctx context.Context, deviceID string, in *DeviceRequestSchema) error
 	CreateDeviceApiKey(ctx context.Context, in *ApiKey) (*ApiKey, error)
-	// GetDeviceApiKeyByID 반횐되는 값은 장치 ID 이다.
-	GetDeviceApiKeyByID(ctx context.Context, apiKey string) (string, error)
+	// GetDeviceApiKeyByApiKey 반횐되는 값은 장치 ID 이다.
+	GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error)
 }
 
 // DeviceData
@@ -115,13 +116,15 @@ type DeviceInfo struct {
 }
 
 type RawApiKey struct {
-	ID       string         `json:"-"` // 32자리 문자열로 직접 생성
+	ID       int            `json:"-"` // 32자리 문자열로 직접 생성
+	APIKey   string         `json:"-"`
 	DeviceID string         `json:"device_id"`
 	Title    string         `json:"title"`
 	Desc     sql.NullString `json:"desc"`
 }
 
 type ApiKey struct {
+	ID       int    `json:"id" doc:"API Key의 고유 ID 입니다." example:"1"`
 	Key      string `json:"-"`
 	DeviceID string `json:"device_id" doc:"장치 고유 ID 입니다."`
 	Title    string `json:"title" maxLength:"50" doc:"API 키에 대한 이름 입니다." example:"경기도 안양시 토마토 농장 A-B1 섹터 센서"`

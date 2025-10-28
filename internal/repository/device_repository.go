@@ -17,11 +17,11 @@ type deviceRepository struct {
 	db  *pgxpool.Pool
 }
 
-func (r *deviceRepository) GetDeviceApiKeyByID(ctx context.Context, id string) (string, error) {
+func (r *deviceRepository) GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error) {
 	var deviceID string
-	q := `SELECT device_info_id FROM device.api_key WHERE id = $1 ;`
-	if err := r.db.QueryRow(ctx, q, id).Scan(&deviceID); err != nil {
-		r.log.Info("device.r.GetDeviceApiKeyByID() 오류", zap.Error(err))
+	q := `SELECT device_info_id FROM device.api_key WHERE api_key = $1 ;`
+	if err := r.db.QueryRow(ctx, q, apiKey).Scan(&deviceID); err != nil {
+		r.log.Info("device.r.GetDeviceApiKeyByApiKey() 오류", zap.Error(err))
 		return "", err
 	}
 
@@ -30,27 +30,31 @@ func (r *deviceRepository) GetDeviceApiKeyByID(ctx context.Context, id string) (
 
 func (r *deviceRepository) CreateDeviceApiKey(ctx context.Context, in *domain.RawApiKey) (*domain.RawApiKey, error) {
 	var apiKey string
-	q := `INSERT INTO device.api_key(id, device_info_id, title, description) VALUES ($1, $2, $3, $4) RETURNING id;`
+	var id int
+	q := `INSERT INTO device.api_key(api_key, user_id, device_info_id, title, description) VALUES ($1, $2, $3, $4, $5) RETURNING id, api_key;`
 	if err := r.db.QueryRow(ctx, q,
-		in.ID,
+		in.APIKey,
+		in.UserID,
 		in.DeviceID,
 		in.Title,
 		in.Desc,
-	).Scan(&apiKey); err != nil {
+	).Scan(&id, &apiKey); err != nil {
 		r.log.Info("device.r.CreateDeviceApiKey() 오류", zap.Error(err))
 		return nil, err
 	}
 
 	// 생성후 반환된 API키가 전달된 키와 일치하지 않는 경우 --> 사실상 인서트 실패
-	if apiKey != in.ID {
+	if apiKey != in.APIKey {
 		err := errors.New("API키 생성에 실패했습니다")
 		r.log.Info("device.r.CreateDeviceApiKey() 오류",
-			zap.Any("apiKey", in.ID),
+			zap.Any("apiKey", in.APIKey),
 			zap.Any("data", in),
 			zap.Error(err),
 		)
 		return nil, err
 	}
+
+	in.ID = id
 
 	return in, nil
 }

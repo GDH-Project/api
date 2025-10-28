@@ -14,8 +14,8 @@ type deviceService struct {
 	device domain.DeviceRepository
 }
 
-func (svc *deviceService) GetDeviceApiKeyByID(ctx context.Context, apiKey string) (string, error) {
-	deviceID, err := svc.device.GetDeviceApiKeyByID(ctx, apiKey)
+func (svc *deviceService) GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error) {
+	deviceID, err := svc.device.GetDeviceApiKeyByApiKey(ctx, apiKey)
 	if err != nil {
 		svc.log.Info("device.svc.GetDeviceApiKeyByID() 오류 - API키가 일치하지 않습니다",
 			zap.String("apiKey", apiKey),
@@ -34,7 +34,8 @@ func (svc *deviceService) CreateDeviceApiKey(ctx context.Context, in *domain.Raw
 	}
 
 	apiKey := &domain.ApiKey{
-		Key:      data.ID,
+		ID:       data.ID,
+		Key:      data.APIKey,
 		DeviceID: data.DeviceID,
 		Title:    data.Title,
 		Desc:     data.Desc.String,

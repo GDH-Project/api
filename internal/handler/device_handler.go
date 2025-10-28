@@ -355,6 +355,7 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 			return nil, huma.Error400BadRequest(err.Error())
 		}
 
+		resp.Body.ID = data.ID
 		resp.Body.Key = data.Key
 		resp.Body.DeviceID = i.DeviceID
 		resp.Body.Title = i.Body.Title

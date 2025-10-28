@@ -18,9 +18,9 @@ type deviceUseCase struct {
 	metaSvc   domain.MetaService
 }
 
-// GetDeviceApiKeyByID 권한 검사가 존재하지 않기 때문에 조심할 것
-func (uc *deviceUseCase) GetDeviceApiKeyByID(ctx context.Context, apiKey string) (string, error) {
-	return uc.deviceSvc.GetDeviceApiKeyByID(ctx, apiKey)
+// GetDeviceApiKeyByApiKey 권한 검사가 존재하지 않기 때문에 조심할 것
+func (uc *deviceUseCase) GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error) {
+	return uc.deviceSvc.GetDeviceApiKeyByApiKey(ctx, apiKey)
 }
 
 func (uc *deviceUseCase) CreateDeviceApiKey(ctx context.Context, in *domain.ApiKey) (*domain.ApiKey, error) {
@@ -46,7 +46,8 @@ func (uc *deviceUseCase) CreateDeviceApiKey(ctx context.Context, in *domain.ApiK
 	key := base64.URLEncoding.EncodeToString(b)
 
 	param := &domain.RawApiKey{
-		ID:       key,
+		APIKey:   key,
+		UserID:   validate.UserID(),
 		DeviceID: in.DeviceID,
 		Title:    in.Title,
 		Desc: sql.NullString{
