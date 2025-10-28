@@ -17,6 +17,49 @@ type deviceRepository struct {
 	db  *pgxpool.Pool
 }
 
+func (r *deviceRepository) GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, userID string, deviceID string) ([]*domain.RawApiKey, error) {
+	var rawApiKeys []*domain.RawApiKey
+
+	q := `SELECT id, user_id, device_info_id, title, description, created_at FROM device.api_key WHERE user_id = $1 AND device_info_id = $2 ORDER BY created_at;`
+	rows, err := r.db.Query(ctx, q, userID, deviceID)
+	if err != nil {
+		r.log.Error("device.r.GetDeviceApiKeyListByUserIDAndDeviceID() 오류",
+			zap.String("userId", userID),
+			zap.String("deviceId", deviceID),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var t domain.RawApiKey
+		if err := rows.Scan(
+			&t.ID,
+			&t.UserID,
+			&t.DeviceID,
+			&t.Title,
+			&t.Desc,
+			&t.CreatedAt,
+		); err != nil {
+			r.log.Error("device.r.GetDeviceApiKeyListByUserIDAndDeviceID() 오류 - 스캔 실패",
+				zap.Error(err),
+			)
+			return nil, err
+		}
+
+		rawApiKeys = append(rawApiKeys, &t)
+	}
+
+	if err := rows.Err(); err != nil {
+		r.log.Error("device.r.GetDeviceApiKeyListByUserIDAndDeviceID() 오류",
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	return rawApiKeys, nil
+}
+
 func (r *deviceRepository) GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error) {
 	var deviceID string
 	q := `SELECT device_info_id FROM device.api_key WHERE api_key = $1 ;`

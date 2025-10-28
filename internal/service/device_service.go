@@ -14,6 +14,17 @@ type deviceService struct {
 	device domain.DeviceRepository
 }
 
+func (svc *deviceService) GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, userID string, deviceID string) ([]*domain.RawApiKey, error) {
+
+	data, err := svc.device.GetDeviceApiKeyListByUserIDAndDeviceID(ctx, userID, deviceID)
+	if err != nil {
+		svc.log.Info("device.svc.GetDeviceApiKeyListByUserIDAndDeviceID()", zap.Error(err))
+		return nil, errors.New("API 키 리스트를 조회할 수 없습니다")
+	}
+
+	return data, nil
+}
+
 func (svc *deviceService) GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error) {
 	deviceID, err := svc.device.GetDeviceApiKeyByApiKey(ctx, apiKey)
 	if err != nil {
@@ -146,7 +157,8 @@ func (svc *deviceService) UpdateDeviceInfo(ctx context.Context, in *domain.RawDe
 func (svc *deviceService) GetDeviceInfoByID(ctx context.Context, id string, userID string) (*domain.DeviceInfo, error) {
 	data, err := svc.device.GetDeviceInfoByID(ctx, id)
 	if err != nil {
-		return nil, err
+		svc.log.Info("device.svc.GetDeviceInfoByID() 오류", zap.Error(err))
+		return nil, errors.New("장치 ID가 존재하지 않습니다")
 	}
 	if data.UserID != userID {
 		err := errors.New("접근 권한이 없습니다")

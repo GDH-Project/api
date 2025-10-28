@@ -30,7 +30,7 @@ type DeviceRepository interface {
 	CreateDeviceApiKey(ctx context.Context, in *RawApiKey) (*RawApiKey, error)
 	// GetDeviceApiKeyByApiKey 반환되는 값은 장치 ID 이다.
 	GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error)
-	// GetDeviceApiKeyListByID(ctx context.Context, id string) ([]*RawApiKey, error)
+	GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, userID string, deviceID string) ([]*RawApiKey, error)
 }
 
 type DeviceService interface {
@@ -45,6 +45,7 @@ type DeviceService interface {
 	CreateDeviceApiKey(ctx context.Context, in *RawApiKey) (*ApiKey, error)
 	// GetDeviceApiKeyByApiKey 반횐되는 값은 장치 ID 이다.
 	GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error)
+	GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, userID string, deviceID string) ([]*RawApiKey, error)
 }
 
 type DeviceUseCase interface {
@@ -61,6 +62,7 @@ type DeviceUseCase interface {
 	CreateDeviceApiKey(ctx context.Context, in *ApiKey) (*ApiKey, error)
 	// GetDeviceApiKeyByApiKey 반횐되는 값은 장치 ID 이다.
 	GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error)
+	GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, deviceID string) ([]*ApiKey, error)
 }
 
 // DeviceData
@@ -116,17 +118,20 @@ type DeviceInfo struct {
 }
 
 type RawApiKey struct {
-	ID       int            `json:"-"` // 32자리 문자열로 직접 생성
-	APIKey   string         `json:"-"`
-	DeviceID string         `json:"device_id"`
-	Title    string         `json:"title"`
-	Desc     sql.NullString `json:"desc"`
+	ID        int            `json:"-"` // 32자리 문자열로 직접 생성
+	APIKey    string         `json:"-"`
+	DeviceID  string         `json:"device_id"`
+	UserID    string         `json:"user_id"` // uuid
+	Title     string         `json:"title"`
+	Desc      sql.NullString `json:"desc"`
+	CreatedAt time.Time      `json:"created_at"`
 }
 
 type ApiKey struct {
-	ID       int    `json:"id" doc:"API Key의 고유 ID 입니다." example:"1"`
-	Key      string `json:"-"`
-	DeviceID string `json:"device_id" doc:"장치 고유 ID 입니다."`
-	Title    string `json:"title" maxLength:"50" doc:"API 키에 대한 이름 입니다." example:"경기도 안양시 토마토 농장 A-B1 섹터 센서"`
-	Desc     string `json:"desc,omitempty" doc:"API 키에 대한 셜명입니다." example:"2층 토마토 센서"`
+	ID        int       `json:"id" doc:"API Key의 고유 ID 입니다." example:"1"`
+	Key       string    `json:"-"`
+	DeviceID  string    `json:"device_id" doc:"장치 고유 ID 입니다."`
+	Title     string    `json:"title" maxLength:"50" doc:"API 키에 대한 이름 입니다." example:"경기도 안양시 토마토 농장 A-B1 섹터 센서"`
+	Desc      string    `json:"desc,omitempty" doc:"API 키에 대한 셜명입니다." example:"2층 토마토 센서"`
+	CreatedAt time.Time `json:"created_at" doc:"API 키 생성 시간 입니다."`
 }

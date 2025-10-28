@@ -18,6 +18,42 @@ type deviceUseCase struct {
 	metaSvc   domain.MetaService
 }
 
+func (uc *deviceUseCase) GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, deviceID string) ([]*domain.ApiKey, error) {
+	// 유저 권한 체크
+	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
+	if err != nil {
+		return nil, err
+	}
+	userID := validate.UserID()
+	deviceInfo, err := uc.deviceSvc.GetDeviceInfoByID(ctx, deviceID, userID)
+	if err != nil {
+		uc.log.Info("device.uc.GetDeviceApiKeyListByUserIDAndDeviceID() 오류 - 장치 정보를 불러올 수 없습니다.",
+			zap.String("userId", userID),
+			zap.String("deviceId", deviceID),
+			zap.Error(err))
+		return nil, err
+	}
+
+	dataList, err := uc.deviceSvc.GetDeviceApiKeyListByUserIDAndDeviceID(ctx, userID, deviceInfo.ID)
+	if err != nil {
+		uc.log.Info("device.uc.GetDeviceApiKeyListByUserIDAndDeviceID() 오류", zap.Error(err))
+		return nil, err
+	}
+
+	var apiKeys []*domain.ApiKey
+	for _, item := range dataList {
+		apiKeys = append(apiKeys, &domain.ApiKey{
+			ID:        item.ID,
+			DeviceID:  item.DeviceID,
+			Title:     item.Title,
+			Desc:      item.Desc.String,
+			CreatedAt: item.CreatedAt,
+		})
+	}
+
+	return apiKeys, nil
+}
+
 // GetDeviceApiKeyByApiKey 권한 검사가 존재하지 않기 때문에 조심할 것
 func (uc *deviceUseCase) GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error) {
 	return uc.deviceSvc.GetDeviceApiKeyByApiKey(ctx, apiKey)

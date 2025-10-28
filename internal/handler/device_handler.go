@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/GDH-Project/api/internal/domain"
 	"github.com/GDH-Project/api/internal/middleware"
@@ -39,7 +40,14 @@ type deviceRequestSchemaListResponse struct {
 type firstDeviceApiKeyResponse struct {
 	Body struct {
 		domain.ApiKey
-		Key string `json:"key" doc:"Api 키 입니다. 최초 한번만 확인 할 수 있습니다."`
+		Key       string    `json:"key" doc:"Api 키 입니다. 최초 한번만 확인 할 수 있습니다."`
+		CreatedAt time.Time `json:"-"`
+	}
+}
+
+type deviceApiKeyListResponse struct {
+	Body struct {
+		Data []*domain.ApiKey `json:"data" doc:"API키 정보 JSON 배열 입니다."`
 	}
 }
 
@@ -362,6 +370,53 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		resp.Body.Desc = i.Body.Desc
 
 		return &resp, nil
+	})
+
+	// 장치 API 키 리스트 조회
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceGetApiKeyListByDeviceID",
+			Method:        http.MethodGet,
+			Path:          "/device/{device_id}/api-key",
+			Summary:       "장치 API 키 리스트 조회 By ID",
+			Description:   "장치 API 키 리스트 조회 By ID API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusOK,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+	}) (*deviceApiKeyListResponse, error) {
+		var resp deviceApiKeyListResponse
+
+		data, err := deviceUseCase.GetDeviceApiKeyListByUserIDAndDeviceID(ctx, i.DeviceID)
+		if err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		resp.Body.Data = data
+
+		return &resp, nil
+	})
+
+	huma.Register(v1, huma.Operation{
+		Summary:       "장치 API 키 인증 테스트",
+		Path:          "/device/data/json",
+		Method:        http.MethodPost,
+		Tags:          []string{"Device"},
+		DefaultStatus: http.StatusOK,
+	}, func(ctx context.Context, i *struct {
+		ApiKey string `header:"x-api-key" doc:"장치 API 키"`
+	}) (*struct{}, error) {
+		log.Info("인증 헤더 테스트", zap.String("apiKey", i.ApiKey))
+		deviceID, err := deviceUseCase.GetDeviceApiKeyByApiKey(ctx, i.ApiKey)
+		if err != nil {
+			return nil, huma.Error401Unauthorized(err.Error())
+		}
+
+		log.Info("장비 정보", zap.String("deviceID", deviceID))
+
+		return nil, nil
 	})
 
 	log.Info("Device Handler 등록")
