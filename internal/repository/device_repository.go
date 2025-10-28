@@ -18,6 +18,37 @@ type deviceRepository struct {
 	db  *pgxpool.Pool
 }
 
+func (r *deviceRepository) GetDeviceDataListByDeviceID(ctx context.Context, deviceID string) ([]*domain.DeviceData, error) {
+	var dataList []*domain.DeviceData
+	q := `SELECT time, device_id, data FROM device.device_data WHERE device_id = $1 ORDER BY time DESC`
+
+	rows, err := r.db.Query(ctx, q, deviceID)
+	if err != nil {
+		r.log.Info("device.r.GetDeviceDataListByDeviceID() 오류",
+			zap.String("deviceId", deviceID),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var t domain.DeviceData
+		if err := rows.Scan(&t.Time, &t.DeviceID, &t.Data); err != nil {
+			r.log.Info("device.r.GetDeviceDataListByDeviceID() 오류 - 데이터 파싱 실패")
+			return nil, err
+		}
+		dataList = append(dataList, &t)
+	}
+
+	if err := rows.Err(); err != nil {
+		r.log.Info("device.r.GetDeviceDataListByDeviceID() 오류")
+		return nil, err
+	}
+
+	return dataList, nil
+}
+
 func (r *deviceRepository) CreateDeviceDataWithDeviceID(ctx context.Context, deviceID, jsonStr string) error {
 	var createdAt time.Time
 	q := `INSERT INTO device.device_data (device_id, data) VALUES ($1, $2::JSONB) RETURNING time;`

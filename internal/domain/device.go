@@ -33,6 +33,7 @@ type DeviceRepository interface {
 	GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, userID string, deviceID string) ([]*RawApiKey, error)
 	DeleteDeviceApiKeyByUserIDAndDeviceIDAndID(ctx context.Context, userID, deviceID, id string) error
 	CreateDeviceDataWithDeviceID(ctx context.Context, deviceID, jsonStr string) error
+	GetDeviceDataListByDeviceID(ctx context.Context, deviceID string) ([]*DeviceData, error)
 }
 
 type DeviceService interface {
