@@ -14,6 +14,18 @@ type deviceService struct {
 	device domain.DeviceRepository
 }
 
+func (svc *deviceService) CreateDeviceDataWithDeviceID(ctx context.Context, deviceID, jsonStr string) error {
+	if err := svc.device.CreateDeviceDataWithDeviceID(ctx, deviceID, jsonStr); err != nil {
+		svc.log.Info("device.svc.CreateDeviceDataWithDeviceID",
+			zap.String("deviceId", deviceID),
+			zap.String("jsonStr", jsonStr),
+			zap.Error(err))
+		return errors.New("장치 데이터를 생성하는데 실패했습니다")
+	}
+
+	return nil
+}
+
 func (svc *deviceService) DeleteDeviceApiKeyByUserIDAndDeviceID(ctx context.Context, userID, deviceID, id string) error {
 	err := svc.device.DeleteDeviceApiKeyByUserIDAndDeviceIDAndID(ctx, userID, deviceID, id)
 	if err != nil {
@@ -133,16 +145,7 @@ func (svc *deviceService) UpdateDeviceReqeustSchemaByID(ctx context.Context, in 
 	return nil
 }
 
-func (svc *deviceService) GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string, userID string) ([]*domain.DeviceRequestSchema, error) {
-	// 장비 접근 권한 체크
-	_, err := svc.checkDeviceAccessState(ctx, deviceID, userID)
-	if err != nil {
-		svc.log.Info("device.svc.UpdateDeviceInfo() 오류 - 장비 접근 권한이 없습니다.")
-		return nil, err
-	}
-
-	// --- 권한 체크 완료 ---
-
+func (svc *deviceService) GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string) ([]*domain.DeviceRequestSchema, error) {
 	// --- 데이터 조회 ---
 	list, err := svc.device.GetDeviceRequestSchemaListByDeviceID(ctx, deviceID)
 	if err != nil {

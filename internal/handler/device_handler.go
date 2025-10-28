@@ -423,22 +423,24 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		return nil, nil
 	})
 
+	// 장치 센서 JSON 데이터 전송 API
 	huma.Register(v1, huma.Operation{
-		Summary:       "장치 API 키 인증 테스트",
+		OperationID:   "v1DeviceCreateDeviceDataWithApiKey",
+		Summary:       "장치 데이터 삽입 By ApiKey",
+		Description:   "발급받은 장치 API 키를 기준으로 실제 센서에서 데이터를 전송하여, 장치 요청 스키마와 1대1 연동하여 값이 저장된다.",
 		Path:          "/device/data/json",
 		Method:        http.MethodPost,
 		Tags:          []string{"Device"},
-		DefaultStatus: http.StatusOK,
+		DefaultStatus: http.StatusCreated,
 	}, func(ctx context.Context, i *struct {
-		ApiKey string `header:"x-api-key" doc:"장치 API 키"`
+		ApiKey string                 `header:"x-api-key" doc:"장치 API 키"`
+		Body   map[string]interface{} `json:"-" doc:"장치 요청 스키마에서 key와 실제 값이 매핑되어 있는 JSON 값입니다." additionalProperties:"true" example:"{\"solid_temp\":32.1}"`
 	}) (*struct{}, error) {
-		log.Info("인증 헤더 테스트", zap.String("apiKey", i.ApiKey))
-		deviceID, err := deviceUseCase.GetDeviceApiKeyByApiKey(ctx, i.ApiKey)
-		if err != nil {
-			return nil, huma.Error401Unauthorized(err.Error())
-		}
 
-		log.Info("장비 정보", zap.String("deviceID", deviceID))
+		err := deviceUseCase.CreateDeviceDataWithApiKey(ctx, i.ApiKey, i.Body)
+		if err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
 
 		return nil, nil
 	})

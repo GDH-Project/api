@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/GDH-Project/api/internal/domain"
 	"github.com/GDH-Project/api/internal/util"
@@ -16,6 +18,53 @@ type deviceUseCase struct {
 	log       *zap.Logger
 	deviceSvc domain.DeviceService
 	metaSvc   domain.MetaService
+}
+
+func (uc *deviceUseCase) CreateDeviceDataWithApiKey(ctx context.Context, apiKey string, in map[string]interface{}) error {
+	// API KEY에 해당하는 장비 ID 추출
+	deviceId, err := uc.deviceSvc.GetDeviceApiKeyByApiKey(ctx, apiKey)
+	if err != nil {
+		return err
+	}
+
+	// 장비 ID에 해당하는 스키마 추출
+	schemaList, err := uc.deviceSvc.GetDeviceReqeustSchemaListByID(ctx, deviceId)
+	if err != nil {
+		uc.log.Info("device.uc.CreateDeviceDataWithApiKey()오류 - 스키마 정보를 받아올 수 없습니다.", zap.Error(err))
+		return err
+	}
+
+	// 스키마에 해당하는 json string 파싱
+	var jsonKeyValue []string
+	for _, schema := range schemaList {
+		data, ok := in[schema.Key]
+		if ok {
+			parseData, idParsed := data.(float64)
+			if idParsed {
+				temp := fmt.Sprintf("\"%s\":%s", schema.Target, util.FormatFloat(parseData, 2))
+				jsonKeyValue = append(jsonKeyValue, temp)
+			}
+		}
+	}
+	if len(jsonKeyValue) == 0 {
+		uc.log.Info("device.uc.CreateDeviceDataWithApiKey() 오류 - 삽입할 데이터가 없음")
+		return errors.New("스키마와 연결된 데이터가 존재하지 않습니다")
+	}
+	jsonStr := fmt.Sprintf("{%s}", strings.Join(jsonKeyValue, ","))
+
+	uc.log.Debug("debug api",
+		zap.Any("schemaList", schemaList),
+		zap.Any("deviceId", deviceId),
+		zap.Any("in", in),
+		zap.Any("jsonKeyValue", jsonKeyValue),
+		zap.Any("jsonStr", jsonStr),
+	)
+
+	if err := uc.deviceSvc.CreateDeviceDataWithDeviceID(ctx, deviceId, jsonStr); err != nil {
+		uc.log.Info("device.uc.CreateDeviceDataWithApiKey() 오류", zap.Error(err))
+		return err
+	}
+	return nil
 }
 
 func (uc *deviceUseCase) DeleteDeviceApiKeyByUserIDAndDeviceID(ctx context.Context, deviceID, id string) error {
@@ -215,7 +264,13 @@ func (uc *deviceUseCase) GetDeviceReqeustSchemaListByID(ctx context.Context, dev
 		return nil, err
 	}
 
-	list, err := uc.deviceSvc.GetDeviceReqeustSchemaListByID(ctx, deviceID, validate.UserID())
+	// 장비 접근 권한 체크
+	deviceInfo, err := uc.deviceSvc.GetDeviceInfoByID(ctx, deviceID, validate.UserID())
+	if err != nil {
+		return nil, err
+	}
+
+	list, err := uc.deviceSvc.GetDeviceReqeustSchemaListByID(ctx, deviceInfo.ID)
 	if err != nil {
 		uc.log.Info("device.uc.GetDeviceReqeustSchemaListByID() 오류", zap.Error(err))
 		return nil, errors.New("장비 스키마 정보를 불러올 수 없습니다")

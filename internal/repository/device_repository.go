@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/GDH-Project/api/internal/domain"
 	"github.com/jackc/pgx/v5"
@@ -15,6 +16,23 @@ import (
 type deviceRepository struct {
 	log *zap.Logger
 	db  *pgxpool.Pool
+}
+
+func (r *deviceRepository) CreateDeviceDataWithDeviceID(ctx context.Context, deviceID, jsonStr string) error {
+	var createdAt time.Time
+	q := `INSERT INTO device.device_data (device_id, data) VALUES ($1, $2::JSONB) RETURNING time;`
+	if err := r.db.QueryRow(ctx, q,
+		deviceID,
+		jsonStr,
+	).Scan(&createdAt); err != nil {
+		r.log.Info("device.r.CreateDeviceDataWithDeviceID",
+			zap.String("deviceId", deviceID),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	return nil
 }
 
 func (r *deviceRepository) DeleteDeviceApiKeyByUserIDAndDeviceIDAndID(ctx context.Context, userID, deviceID, id string) error {
