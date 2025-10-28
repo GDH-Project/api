@@ -338,8 +338,8 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 			OperationID:   "v1DeviceCreateApiKeyByDeviceID",
 			Method:        http.MethodPost,
 			Path:          "/device/{device_id}/api-key",
-			Summary:       "장치 Api Key 생성 By ID",
-			Description:   "장치 Api Key 생성 By ID API 입니다.",
+			Summary:       "장치 Api 키 생성 By ID",
+			Description:   "장치 Api 키 생성 By ID API 입니다.",
 			Tags:          []string{"Device"},
 			DefaultStatus: http.StatusCreated,
 		},
@@ -397,6 +397,30 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		resp.Body.Data = data
 
 		return &resp, nil
+	})
+
+	// 장치 API 키 제거
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceDeleteApiKeyByDeviceID",
+			Method:        http.MethodDelete,
+			Path:          "/device/{device_id}/api-key/{api_key_id}",
+			Summary:       "장치 Api 키 제거 By ID",
+			Description:   "장치 Api 키 제거 By ID API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusOK,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+		ApiID    string `path:"api_key_id" doc:"API 키 고유 ID 입니다." example:"1"`
+	}) (*struct{}, error) {
+
+		if err := deviceUseCase.DeleteDeviceApiKeyByUserIDAndDeviceID(ctx, i.DeviceID, i.ApiID); err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		return nil, nil
 	})
 
 	huma.Register(v1, huma.Operation{

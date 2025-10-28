@@ -18,6 +18,18 @@ type deviceUseCase struct {
 	metaSvc   domain.MetaService
 }
 
+func (uc *deviceUseCase) DeleteDeviceApiKeyByUserIDAndDeviceID(ctx context.Context, deviceID, id string) error {
+	// 유저 권한 체크
+	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
+	if err != nil {
+		return err
+	}
+	userID := validate.UserID()
+
+	// 장치와 유저 연결설 체크는 불필요
+	return uc.deviceSvc.DeleteDeviceApiKeyByUserIDAndDeviceID(ctx, userID, deviceID, id)
+}
+
 func (uc *deviceUseCase) GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, deviceID string) ([]*domain.ApiKey, error) {
 	// 유저 권한 체크
 	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)

@@ -17,6 +17,26 @@ type deviceRepository struct {
 	db  *pgxpool.Pool
 }
 
+func (r *deviceRepository) DeleteDeviceApiKeyByUserIDAndDeviceIDAndID(ctx context.Context, userID, deviceID, id string) error {
+	var deletedID string
+
+	q := `DELETE FROM device.api_key WHERE user_id = $1 AND device_info_id = $2 AND id = $3 RETURNING id;`
+	if err := r.db.QueryRow(ctx, q,
+		userID,
+		deviceID,
+		id,
+	).Scan(&deletedID); err != nil {
+		r.log.Info("device.r.DeleteDeviceApiKeyByUserIDAndID() 오류",
+			zap.String("userId", userID),
+			zap.String("id", id),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	return nil
+}
+
 func (r *deviceRepository) GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, userID string, deviceID string) ([]*domain.RawApiKey, error) {
 	var rawApiKeys []*domain.RawApiKey
 

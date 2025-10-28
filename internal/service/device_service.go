@@ -14,6 +14,21 @@ type deviceService struct {
 	device domain.DeviceRepository
 }
 
+func (svc *deviceService) DeleteDeviceApiKeyByUserIDAndDeviceID(ctx context.Context, userID, deviceID, id string) error {
+	err := svc.device.DeleteDeviceApiKeyByUserIDAndDeviceIDAndID(ctx, userID, deviceID, id)
+	if err != nil {
+		svc.log.Warn("device.svc.DeleteDeviceApiKeyByUserIDAndDeviceIDAndID() 오류",
+			zap.String("userId", userID),
+			zap.String("deviceId", deviceID),
+			zap.String("id", id),
+			zap.Error(err),
+		)
+		return errors.New("장치 API를 제거할 수 없습니다")
+	}
+
+	return nil
+}
+
 func (svc *deviceService) GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, userID string, deviceID string) ([]*domain.RawApiKey, error) {
 
 	data, err := svc.device.GetDeviceApiKeyListByUserIDAndDeviceID(ctx, userID, deviceID)
