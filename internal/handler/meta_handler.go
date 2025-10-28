@@ -253,5 +253,4 @@ func RegisterMetaHandler(api huma.API, log *zap.Logger, metaUseCase domain.MetaU
 	})
 
 	log.Info("Meta Handler 등록")
-
 }

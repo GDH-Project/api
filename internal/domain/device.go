@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -19,25 +20,55 @@ type DeviceRepository interface {
 	// UpdateDeviceInfo 장치 정보 업데이트
 	UpdateDeviceInfo(ctx context.Context, in *RawDeviceInfo) error
 	// DeleteDeviceInfoByID 장비 제거
-	DeleteDeviceInfoByID(ctx context.Context, id string) error
-	// CreateDeviceReqeustSchemaListTx req_to_sensor 에 삽입되는 디바이스 응답(JSON) 키와 센서를 연결하는 부분
-	CreateDeviceReqeustSchemaListTx(ctx context.Context, tx pgx.Tx, deviceID string, schemas []*RawDeviceRequestSchema) error
+	DeleteDeviceInfoByID(ctx context.Context, id string, userID string) error
+	// CreateDeviceRequestSchemaListTx req_to_sensor 에 삽입되는 디바이스 응답(JSON) 키와 센서를 연결하는 부분
+	CreateDeviceRequestSchemaListTx(ctx context.Context, tx pgx.Tx, deviceID string, schemas []*RawDeviceRequestSchema) error
 	GetDeviceRequestSchemaListByDeviceID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
 	GetDeviceRequestSchemaByID(ctx context.Context, id int) (*DeviceRequestSchema, error)
 	UpdateDeviceRequestSchema(ctx context.Context, in *RawDeviceRequestSchema) error
 	DeleteDeviceRequestSchemaByID(ctx context.Context, id int) error
+	CreateDeviceApiKey(ctx context.Context, in *RawApiKey) (*RawApiKey, error)
+	// GetDeviceApiKeyByApiKey 반환되는 값은 장치 ID 이다.
+	GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error)
+	GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, userID string, deviceID string) ([]*RawApiKey, error)
+	DeleteDeviceApiKeyByUserIDAndDeviceIDAndID(ctx context.Context, userID, deviceID, id string) error
+	CreateDeviceDataWithDeviceID(ctx context.Context, deviceID, jsonStr string) error
 }
 
 type DeviceService interface {
 	CreateDevice(ctx context.Context, deviceInfoData *RawDeviceInfo, deviceSchemaDataList []*RawDeviceRequestSchema) error
 	GetDeviceInfoListByParamAndPage(ctx context.Context, in *DeviceInfo, page *Page) ([]*DeviceInfo, *Page, error)
 	GetDeviceInfoByID(ctx context.Context, id string, userID string) (*DeviceInfo, error)
+	UpdateDeviceInfo(ctx context.Context, in *RawDeviceInfo) error
+	GetDeviceRequestSchemaListByID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
+	UpdateDeviceRequestSchemaByID(ctx context.Context, in *RawDeviceRequestSchema, userID string) error
+	DeleteDeviceInfoByID(ctx context.Context, deviceID string, userID string) error
+	CreateDeviceRequestSchema(ctx context.Context, in *RawDeviceRequestSchema) error
+	CreateDeviceApiKey(ctx context.Context, in *RawApiKey) (*ApiKey, error)
+	// GetDeviceApiKeyByApiKey 반환되는 값은 장치 ID 이다.
+	GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error)
+	GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, userID string, deviceID string) ([]*RawApiKey, error)
+	DeleteDeviceApiKeyByUserIDAndDeviceID(ctx context.Context, userID, deviceID, id string) error
+	CreateDeviceDataWithDeviceID(ctx context.Context, deviceID, jsonStr string) error
 }
 
 type DeviceUseCase interface {
 	CreateDevice(ctx context.Context, deviceInfoData *DeviceInfo, deviceSchemaDataList []*DeviceRequestSchema) error
 	GetDeviceInfoListByParamAndPage(ctx context.Context, in *DeviceInfo, page *Page) ([]*DeviceInfo, *Page, error)
 	GetDeviceInfoByID(ctx context.Context, id string) (*DeviceInfo, error)
+	UpdateDeviceInfo(ctx context.Context, in *DeviceInfo) error
+
+	GetDeviceRequestSchemaListByID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
+	UpdateDeviceRequestSchemaByID(ctx context.Context, in *DeviceRequestSchema, deviceID string) error
+	DeleteDeviceInfoByID(ctx context.Context, deviceID string) error
+	CreateDeviceRequestSchema(ctx context.Context, deviceID string, in *DeviceRequestSchema) error
+	CreateDeviceApiKey(ctx context.Context, in *ApiKey) (*ApiKey, error)
+	// GetDeviceApiKeyByApiKey 반환되는 값은 장치 ID 이다.
+	GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error)
+	GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, deviceID string) ([]*ApiKey, error)
+	DeleteDeviceApiKeyByUserIDAndDeviceID(ctx context.Context, deviceID, id string) error
+	// CreateDeviceDataWithApiKey apiKey로 받은 장치 ID를 확인하고 스키마에서 값을 받아온 후 이를 토대로 json string을 만들어 서비스에 전달한다.
+	CreateDeviceDataWithApiKey(ctx context.Context, apiKey string, in map[string]interface{}) error
 }
 
 // DeviceData
@@ -90,4 +121,23 @@ type DeviceInfo struct {
 
 	CreatedAt time.Time `json:"created_at" doc:"최초 장치 등록 시간 입니다." example:"2025-10-24 22:54:52.874221 +09:00"`
 	UpdatedAt time.Time `json:"updated_at" doc:"장치 정보 업데이트 시간 입니다." example:"2025-10-24 22:54:52.874221 +09:00"`
+}
+
+type RawApiKey struct {
+	ID        int            `json:"-"` // 32자리 문자열로 직접 생성
+	APIKey    string         `json:"-"`
+	DeviceID  string         `json:"device_id"`
+	UserID    string         `json:"user_id"` // uuid
+	Title     string         `json:"title"`
+	Desc      sql.NullString `json:"desc"`
+	CreatedAt time.Time      `json:"created_at"`
+}
+
+type ApiKey struct {
+	ID        int       `json:"id" doc:"API Key의 고유 ID 입니다." example:"1"`
+	Key       string    `json:"-"`
+	DeviceID  string    `json:"device_id" doc:"장치 고유 ID 입니다."`
+	Title     string    `json:"title" maxLength:"50" doc:"API 키에 대한 이름 입니다." example:"경기도 안양시 토마토 농장 A-B1 섹터 센서"`
+	Desc      string    `json:"desc,omitempty" doc:"API 키에 대한 설명입니다." example:"2층 토마토 센서"`
+	CreatedAt time.Time `json:"created_at" doc:"API 키 생성 시간 입니다."`
 }
