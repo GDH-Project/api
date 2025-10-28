@@ -144,7 +144,7 @@ func RegisterSearchHandler(api huma.API, log *zap.Logger, searchUseCase domain.S
 			RecordCount: page.RecordCount,
 		}
 		if page.HasNext() {
-			pageInfo.NextPage = page.Size + 1
+			pageInfo.NextPage = page.Page + 1
 			pageInfo.HasNextPage = true
 		}
 		resp.Body.PageInfo = *pageInfo

@@ -73,7 +73,7 @@ func (r *deviceRepository) GetRankingDeviceInfoList(ctx context.Context, filter 
 			&deviceInfo.CreatedAt,
 			&deviceInfo.UpdatedAt,
 		); err != nil {
-			r.log.Error("device.r.GetDeviceInfoListByParamAndPage() 오류", zap.Error(err))
+			r.log.Error("device.r.GetRankingDeviceInfoList() 오류", zap.Error(err))
 			return nil, err
 		}
 
@@ -81,7 +81,7 @@ func (r *deviceRepository) GetRankingDeviceInfoList(ctx context.Context, filter 
 	}
 
 	if err := rows.Err(); err != nil {
-		r.log.Error("device.r.GetDeviceInfoListByParamAndPage() 오류", zap.Error(err))
+		r.log.Error("device.r.GetRankingDeviceInfoList() 오류", zap.Error(err))
 		return nil, err
 	}
 

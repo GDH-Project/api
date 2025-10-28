@@ -17,7 +17,7 @@ func (svc *searchService) GetRankingDeviceInfoList(ctx context.Context, filter d
 	data, err := svc.device.GetRankingDeviceInfoList(ctx, filter, limit)
 	if err != nil {
 		svc.log.Error("search.svc.GetRankingDeviceInfoList", zap.Error(err))
-		return nil, errors.New("랭킬 정보 로드중 오류가 발생했습니다")
+		return nil, errors.New("랭킹 정보 로드중 오류가 발생했습니다")
 	}
 
 	return data, nil
