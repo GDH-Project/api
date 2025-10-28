@@ -33,6 +33,8 @@ type DeviceRepository interface {
 	GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, userID string, deviceID string) ([]*RawApiKey, error)
 	DeleteDeviceApiKeyByUserIDAndDeviceIDAndID(ctx context.Context, userID, deviceID, id string) error
 	CreateDeviceDataWithDeviceID(ctx context.Context, deviceID, jsonStr string) error
+	GetDeviceDataListByDeviceID(ctx context.Context, deviceID string) ([]*DeviceData, error)
+	GetRankingDeviceInfoList(ctx context.Context, filter DeviceRanking, limit int) ([]*DeviceInfo, error)
 }
 
 type DeviceService interface {
@@ -70,6 +72,13 @@ type DeviceUseCase interface {
 	// CreateDeviceDataWithApiKey apiKey로 받은 장치 ID를 확인하고 스키마에서 값을 받아온 후 이를 토대로 json string을 만들어 서비스에 전달한다.
 	CreateDeviceDataWithApiKey(ctx context.Context, apiKey string, in map[string]interface{}) error
 }
+
+type DeviceRanking int
+
+const (
+	DeviceRankingByLastCreated DeviceRanking = 0
+	DeviceRankingByLastUpdated DeviceRanking = 1
+)
 
 // DeviceData
 //
