@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/GDH-Project/api/internal/domain"
 	"github.com/jackc/pgx/v5"
@@ -15,6 +16,128 @@ import (
 type deviceRepository struct {
 	log *zap.Logger
 	db  *pgxpool.Pool
+}
+
+func (r *deviceRepository) CreateDeviceDataWithDeviceID(ctx context.Context, deviceID, jsonStr string) error {
+	var createdAt time.Time
+	q := `INSERT INTO device.device_data (device_id, data) VALUES ($1, $2::JSONB) RETURNING time;`
+	if err := r.db.QueryRow(ctx, q,
+		deviceID,
+		jsonStr,
+	).Scan(&createdAt); err != nil {
+		r.log.Info("device.r.CreateDeviceDataWithDeviceID",
+			zap.String("deviceId", deviceID),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	return nil
+}
+
+func (r *deviceRepository) DeleteDeviceApiKeyByUserIDAndDeviceIDAndID(ctx context.Context, userID, deviceID, id string) error {
+	var deletedID string
+
+	q := `DELETE FROM device.api_key WHERE user_id = $1 AND device_info_id = $2 AND id = $3 RETURNING id;`
+	if err := r.db.QueryRow(ctx, q,
+		userID,
+		deviceID,
+		id,
+	).Scan(&deletedID); err != nil {
+		r.log.Info("device.r.DeleteDeviceApiKeyByUserIDAndID() 오류",
+			zap.String("userId", userID),
+			zap.String("id", id),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	return nil
+}
+
+func (r *deviceRepository) GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, userID string, deviceID string) ([]*domain.RawApiKey, error) {
+	var rawApiKeys []*domain.RawApiKey
+
+	q := `SELECT id, user_id, device_info_id, title, description, created_at FROM device.api_key WHERE user_id = $1 AND device_info_id = $2 ORDER BY created_at;`
+	rows, err := r.db.Query(ctx, q, userID, deviceID)
+	if err != nil {
+		r.log.Error("device.r.GetDeviceApiKeyListByUserIDAndDeviceID() 오류",
+			zap.String("userId", userID),
+			zap.String("deviceId", deviceID),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var t domain.RawApiKey
+		if err := rows.Scan(
+			&t.ID,
+			&t.UserID,
+			&t.DeviceID,
+			&t.Title,
+			&t.Desc,
+			&t.CreatedAt,
+		); err != nil {
+			r.log.Error("device.r.GetDeviceApiKeyListByUserIDAndDeviceID() 오류 - 스캔 실패",
+				zap.Error(err),
+			)
+			return nil, err
+		}
+
+		rawApiKeys = append(rawApiKeys, &t)
+	}
+
+	if err := rows.Err(); err != nil {
+		r.log.Error("device.r.GetDeviceApiKeyListByUserIDAndDeviceID() 오류",
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	return rawApiKeys, nil
+}
+
+func (r *deviceRepository) GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error) {
+	var deviceID string
+	q := `SELECT device_info_id FROM device.api_key WHERE api_key = $1 ;`
+	if err := r.db.QueryRow(ctx, q, apiKey).Scan(&deviceID); err != nil {
+		r.log.Info("device.r.GetDeviceApiKeyByApiKey() 오류", zap.Error(err))
+		return "", err
+	}
+
+	return deviceID, nil
+}
+
+func (r *deviceRepository) CreateDeviceApiKey(ctx context.Context, in *domain.RawApiKey) (*domain.RawApiKey, error) {
+	var apiKey string
+	var id int
+	q := `INSERT INTO device.api_key(api_key, user_id, device_info_id, title, description) VALUES ($1, $2, $3, $4, $5) RETURNING id, api_key;`
+	if err := r.db.QueryRow(ctx, q,
+		in.APIKey,
+		in.UserID,
+		in.DeviceID,
+		in.Title,
+		in.Desc,
+	).Scan(&id, &apiKey); err != nil {
+		r.log.Info("device.r.CreateDeviceApiKey() 오류", zap.Error(err))
+		return nil, err
+	}
+
+	// 생성후 반환된 API키가 전달된 키와 일치하지 않는 경우 --> 사실상 인서트 실패
+	if apiKey != in.APIKey {
+		err := errors.New("API키 생성에 실패했습니다")
+		r.log.Info("device.r.CreateDeviceApiKey() 오류",
+			zap.Any("apiKey", in.APIKey),
+			zap.Any("data", in),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	in.ID = id
+
+	return in, nil
 }
 
 func (r *deviceRepository) DeleteDeviceRequestSchemaByID(ctx context.Context, id int) error {
@@ -108,11 +231,11 @@ func (r *deviceRepository) GetDeviceRequestSchemaListByDeviceID(ctx context.Cont
 	return deviceSchemaList, nil
 }
 
-func (r *deviceRepository) CreateDeviceReqeustSchemaListTx(ctx context.Context, tx pgx.Tx, deviceID string, schemas []*domain.RawDeviceRequestSchema) error {
+func (r *deviceRepository) CreateDeviceRequestSchemaListTx(ctx context.Context, tx pgx.Tx, deviceID string, schemas []*domain.RawDeviceRequestSchema) error {
 	// deviceID 가 없거나 스키마가 없는 경우 필터링
 	if deviceID == "" || len(schemas) == 0 {
 		err := errors.New("파라미터를 확인해 주세요")
-		r.log.Info("device.r.CreateDeviceReqeustSchemaListTx() 오류",
+		r.log.Info("device.r.CreateDeviceRequestSchemaListTx() 오류",
 			zap.String("deviceID", deviceID),
 			zap.Any("schemas", schemas),
 			zap.Error(err),
@@ -147,7 +270,7 @@ func (r *deviceRepository) CreateDeviceReqeustSchemaListTx(ctx context.Context, 
 
 	_, err := tx.Exec(ctx, q, args...)
 	if err != nil {
-		r.log.Error("device.r.CreateDeviceReqeustSchemaListTx() 오류",
+		r.log.Error("device.r.CreateDeviceRequestSchemaListTx() 오류",
 			zap.String("deviceID", deviceID),
 			zap.String("q", q),
 			zap.Any("args", args),
@@ -160,10 +283,20 @@ func (r *deviceRepository) CreateDeviceReqeustSchemaListTx(ctx context.Context, 
 	return nil
 }
 
-func (r *deviceRepository) DeleteDeviceInfoByID(ctx context.Context, id string) error {
+func (r *deviceRepository) DeleteDeviceInfoByID(ctx context.Context, id string, userID string) error {
 	var successID string
-	q := `UPDATE device.device_info SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1::uuid RETURNING id;`
-	if err := r.db.QueryRow(ctx, q, id).Scan(&successID); err != nil {
+	q := `
+			UPDATE device.device_info
+			SET deleted_at = NOW()
+			WHERE 
+			    deleted_at IS NULL 
+			  AND 
+			    id = $1::uuid 
+			  AND 
+			    user_id = $2::uuid
+			RETURNING id;
+		`
+	if err := r.db.QueryRow(ctx, q, id, userID).Scan(&successID); err != nil {
 		r.log.Error("device.r.DeleteDeviceInfoByID() 오류", zap.String("id", id), zap.Error(err))
 		return err
 	}

@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/GDH-Project/api/internal/domain"
 	"github.com/GDH-Project/api/internal/middleware"
@@ -19,21 +20,41 @@ type pageInfo struct {
 }
 type deviceInfoListResponse struct {
 	Body struct {
-		Data     []*domain.DeviceInfo `json:"data" doc:"장비 정보 JSON 배열 입니다."`
+		Data     []*domain.DeviceInfo `json:"data" doc:"장치 정보 JSON 배열 입니다."`
 		PageInfo pageInfo             `json:"page_info" doc:"페이지 정보 입니다."`
 	}
 }
 
 type deviceInfoResponse struct {
 	Body struct {
-		Data *domain.DeviceInfo `json:"data" doc:"장비 정보 JSON 입니다."`
+		Data *domain.DeviceInfo `json:"data" doc:"장치 정보 JSON 입니다."`
+	}
+}
+
+type deviceRequestSchemaListResponse struct {
+	Body struct {
+		Data []*domain.DeviceRequestSchema `json:"data" doc:"장치 요청 스키마 JSON 배열 입니다."`
+	}
+}
+
+type firstDeviceApiKeyResponse struct {
+	Body struct {
+		domain.ApiKey
+		Key       string    `json:"key" doc:"Api 키 입니다. 최초 한번만 확인 할 수 있습니다."`
+		CreatedAt time.Time `json:"-"`
+	}
+}
+
+type deviceApiKeyListResponse struct {
+	Body struct {
+		Data []*domain.ApiKey `json:"data" doc:"API키 정보 JSON 배열 입니다."`
 	}
 }
 
 func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.DeviceUseCase, m middleware.Middleware) {
 	v1 := huma.NewGroup(api, "/api/v1")
 
-	// 장비 생성 API
+	// 장치 생성 API
 	huma.Register(v1, m.WithAuth(
 		huma.Operation{
 			OperationID:   "v1DeviceCreateDeviceInfoWithSchema",
@@ -56,9 +77,9 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 				City  string `json:"city" doc:"시/군/구 명칭 입니다." example:"안양시"`
 			} `json:"address" doc:"주소 정보 입니다."`
 			Schema []struct {
-				Key    string `json:"key" doc:"장비에서 보내는 데이터 JSON의 키값 입니다." example:"soil_temp"`
+				Key    string `json:"key" doc:"장치에서 보내는 데이터 JSON의 키값 입니다." example:"soil_temp"`
 				Target string `json:"target" doc:"지정한 키를 바인딩 할 센서 명칭 입니다." example:"토양 온도"`
-			} `json:"schema,omitempty" doc:"장비의 요청과 센서 값을 바인딩 하는 스키마 입니다."`
+			} `json:"schema,omitempty" doc:"장치의 요청과 센서 값을 바인딩 하는 스키마 입니다."`
 		}
 	}) (*struct{}, error) {
 
@@ -87,14 +108,14 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		return nil, nil
 	})
 
-	// 나의 장비 리스트 조회 API
+	// 나의 장치 리스트 조회 API
 	huma.Register(v1, m.WithAuth(
 		huma.Operation{
 			OperationID:   "v1DeviceGetMyDeviceInfoList",
 			Method:        http.MethodGet,
 			Path:          "/devices",
-			Summary:       "나의 장치 정보 리스트 조회",
-			Description:   "나의 장치 정보 리스트 조회 API 입니다.",
+			Summary:       "장치 정보 리스트 조회",
+			Description:   "장치 정보 리스트 조회 API 입니다.",
 			Tags:          []string{"Device"},
 			DefaultStatus: http.StatusOK,
 		},
@@ -142,20 +163,20 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		return &resp, nil
 	})
 
-	// 장비 정보 조회 By ID
+	// 장치 정보 조회 By ID
 	huma.Register(v1, m.WithAuth(
 		huma.Operation{
 			OperationID:   "v1DeviceGetMyDeviceInfoByID",
 			Method:        http.MethodGet,
-			Path:          "/device/{id}",
-			Summary:       "나의 장치 정보 조회 By ID",
-			Description:   "나의 장치 정보 조회 By ID API 입니다.",
+			Path:          "/device/{device_id}",
+			Summary:       "장치 정보 조회 By ID",
+			Description:   "장치 정보 조회 By ID API 입니다.",
 			Tags:          []string{"Device"},
 			DefaultStatus: http.StatusOK,
 		},
 		domain.UserRoleDevice,
 	), func(ctx context.Context, i *struct {
-		DeviceID string `path:"id" doc:"장비 정보 고유 ID 입니다." format:"uuid"`
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
 	}) (*deviceInfoResponse, error) {
 		var resp deviceInfoResponse
 		data, err := deviceUseCase.GetDeviceInfoByID(ctx, i.DeviceID)
@@ -166,7 +187,263 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		resp.Body.Data = data
 
 		return &resp, nil
-
 	})
 
+	// 장치 정보 업데이트 By ID API
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceUpdateMyDeviceInfoByID",
+			Method:        http.MethodPut,
+			Path:          "/device/{device_id}",
+			Summary:       "장치 정보 업데이트 By ID",
+			Description:   "장치 정보 업데이트 By ID API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusOK,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+		Body     struct {
+			Title       string `json:"title,omitempty" minLength:"5" doc:"장치의 이름 입니다. 검색 시 노출되는 이름 입니다." example:"경기도 안양시 토마토 스마트팜"`
+			Name        string `json:"name,omitempty" doc:"장치 등록자만 확인 가능한 값입니다. 개인의 장치 식별에 사용하면 됩니다." example:"A-B1 섹터 3구역"`
+			UpdateCycle int    `json:"interval,omitempty" doc:"데이터의 업데이트 주기 입니다.(분)" example:"30"`
+		}
+	}) (*struct{}, error) {
+		var param domain.DeviceInfo
+		param.ID = i.DeviceID
+		param.Title = i.Body.Title
+		param.Name = &i.Body.Name
+		param.UpdateCycle = i.Body.UpdateCycle
+
+		if err := deviceUseCase.UpdateDeviceInfo(ctx, &param); err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		return nil, nil
+	})
+
+	// 장치 정보 제거 By ID API
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceDeleteDeviceInfoByID",
+			Method:        http.MethodDelete,
+			Path:          "/device/{device_id}",
+			Summary:       "장치 정보 제거 By ID",
+			Description:   "장치 정보 제거 By ID API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusOK,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+	}) (*struct{}, error) {
+		if err := deviceUseCase.DeleteDeviceInfoByID(ctx, i.DeviceID); err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+		return nil, nil
+	})
+
+	// 장치 요청 스키마 생성 API
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceCreateDeviceReqeustSchemaByDeviceID",
+			Method:        http.MethodPost,
+			Path:          "/device/{device_id}/schema",
+			Summary:       "장치 요청 스키마 생성",
+			Description:   "장치 요청 스키마 생성 API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusCreated,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+		Body     struct {
+			Key    string `json:"key" doc:"장치에서 보내는 데이터 JSON의 키값 입니다." example:"soil_temp"`
+			Target string `json:"target" doc:"지정한 키를 바인딩 할 센서 명칭 입니다." example:"토양 온도"`
+		}
+	}) (*struct{}, error) {
+		var param domain.DeviceRequestSchema
+
+		param.Key = i.Body.Key
+		param.Target = i.Body.Target
+
+		if err := deviceUseCase.CreateDeviceRequestSchema(ctx, i.DeviceID, &param); err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		return nil, nil
+	})
+
+	// 장치 요청 스키마 리스트 조회 API
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceGetDeviceReqeustSchemaListByDeviceID",
+			Method:        http.MethodGet,
+			Path:          "/device/{device_id}/schema",
+			Summary:       "장치 요청 스키마 리스트 조회 By DeviceID",
+			Description:   "장치 요청 스키마 리스트 조회 By DeviceID API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusOK,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+	}) (*deviceRequestSchemaListResponse, error) {
+		var resp deviceRequestSchemaListResponse
+
+		schemaList, err := deviceUseCase.GetDeviceRequestSchemaListByID(ctx, i.DeviceID)
+		if err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		resp.Body.Data = schemaList
+		return &resp, nil
+	})
+
+	// 장치 요청 스키마 수정 By ID API
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceUpdateDeviceReqeustSchemaByDeviceIDAndSchemaID",
+			Method:        http.MethodPut,
+			Path:          "/device/{device_id}/schema/{schema_id}",
+			Summary:       "장치 요청 스키마 수정 By ID",
+			Description:   "장치 요청 스키마 수정 By ID API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusOK,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+		SchemaID int    `path:"schema_id" doc:"요청 스키마 ID 입니다."`
+		Body     struct {
+			Key    string `json:"key" doc:"바인딩할 요청시 JSON 키 입니다." example:"temp"`
+			Target string `json:"target" doc:"바인딩할 key -> sensor title 입니다." example:"기온"`
+		}
+	}) (*struct{}, error) {
+		var param domain.DeviceRequestSchema
+		param.ID = i.SchemaID
+		param.Key = i.Body.Key
+		param.Target = i.Body.Target
+
+		if err := deviceUseCase.UpdateDeviceRequestSchemaByID(ctx, &param, i.DeviceID); err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		return nil, nil
+	})
+
+	// 장치 API 키 생성 API
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceCreateApiKeyByDeviceID",
+			Method:        http.MethodPost,
+			Path:          "/device/{device_id}/api-key",
+			Summary:       "장치 Api 키 생성 By ID",
+			Description:   "장치 Api 키 생성 By ID API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusCreated,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+		Body     struct {
+			Title string `json:"title" maxLength:"40" doc:"사용자가 API키 식별에 사용되는 값입니다." example:"안양시 토마토 농장"`
+			Desc  string `json:"desc,omitempty" doc:"사용자가 추가로 남길 API키에 대한 설명입니다." example:"A-B1 섹터 2층 1번 센서"`
+		}
+	}) (*firstDeviceApiKeyResponse, error) {
+		var resp firstDeviceApiKeyResponse
+
+		param := &domain.ApiKey{
+			DeviceID: i.DeviceID,
+			Title:    i.Body.Title,
+			Desc:     i.Body.Desc,
+		}
+		data, err := deviceUseCase.CreateDeviceApiKey(ctx, param)
+		if err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		resp.Body.ID = data.ID
+		resp.Body.Key = data.Key
+		resp.Body.DeviceID = i.DeviceID
+		resp.Body.Title = i.Body.Title
+		resp.Body.Desc = i.Body.Desc
+
+		return &resp, nil
+	})
+
+	// 장치 API 키 리스트 조회
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceGetApiKeyListByDeviceID",
+			Method:        http.MethodGet,
+			Path:          "/device/{device_id}/api-key",
+			Summary:       "장치 API 키 리스트 조회 By ID",
+			Description:   "장치 API 키 리스트 조회 By ID API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusOK,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+	}) (*deviceApiKeyListResponse, error) {
+		var resp deviceApiKeyListResponse
+
+		data, err := deviceUseCase.GetDeviceApiKeyListByUserIDAndDeviceID(ctx, i.DeviceID)
+		if err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		resp.Body.Data = data
+
+		return &resp, nil
+	})
+
+	// 장치 API 키 제거
+	huma.Register(v1, m.WithAuth(
+		huma.Operation{
+			OperationID:   "v1DeviceDeleteApiKeyByDeviceID",
+			Method:        http.MethodDelete,
+			Path:          "/device/{device_id}/api-key/{api_key_id}",
+			Summary:       "장치 Api 키 제거 By ID",
+			Description:   "장치 Api 키 제거 By ID API 입니다.",
+			Tags:          []string{"Device"},
+			DefaultStatus: http.StatusOK,
+		},
+		domain.UserRoleDevice,
+	), func(ctx context.Context, i *struct {
+		DeviceID string `path:"device_id" doc:"장치 정보 고유 ID 입니다." format:"uuid"`
+		ApiID    string `path:"api_key_id" doc:"API 키 고유 ID 입니다." example:"1"`
+	}) (*struct{}, error) {
+
+		if err := deviceUseCase.DeleteDeviceApiKeyByUserIDAndDeviceID(ctx, i.DeviceID, i.ApiID); err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		return nil, nil
+	})
+
+	// 장치 센서 JSON 데이터 전송 API
+	huma.Register(v1, huma.Operation{
+		OperationID:   "v1DeviceCreateDeviceDataWithApiKey",
+		Summary:       "장치 데이터 삽입 By ApiKey",
+		Description:   "발급받은 장치 API 키를 기준으로 실제 센서에서 데이터를 전송하여, 장치 요청 스키마와 1대1 연동하여 값이 저장된다.",
+		Path:          "/device/data/json",
+		Method:        http.MethodPost,
+		Tags:          []string{"Device"},
+		DefaultStatus: http.StatusCreated,
+	}, func(ctx context.Context, i *struct {
+		ApiKey string                 `header:"x-api-key" doc:"장치 API 키"`
+		Body   map[string]interface{} `json:"-" doc:"장치 요청 스키마에서 key와 실제 값이 매핑되어 있는 JSON 값입니다." additionalProperties:"true" example:"{\"solid_temp\":32.1}"`
+	}) (*struct{}, error) {
+
+		err := deviceUseCase.CreateDeviceDataWithApiKey(ctx, i.ApiKey, i.Body)
+		if err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		return nil, nil
+	})
+
+	log.Info("Device Handler 등록")
 }

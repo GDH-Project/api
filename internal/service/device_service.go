@@ -12,13 +12,171 @@ import (
 type deviceService struct {
 	log    *zap.Logger
 	device domain.DeviceRepository
-	meta   domain.MetaRepository
+}
+
+func (svc *deviceService) CreateDeviceDataWithDeviceID(ctx context.Context, deviceID, jsonStr string) error {
+	if err := svc.device.CreateDeviceDataWithDeviceID(ctx, deviceID, jsonStr); err != nil {
+		svc.log.Info("device.svc.CreateDeviceDataWithDeviceID",
+			zap.String("deviceId", deviceID),
+			zap.String("jsonStr", jsonStr),
+			zap.Error(err))
+		return errors.New("장치 데이터를 생성하는데 실패했습니다")
+	}
+
+	return nil
+}
+
+func (svc *deviceService) DeleteDeviceApiKeyByUserIDAndDeviceID(ctx context.Context, userID, deviceID, id string) error {
+	err := svc.device.DeleteDeviceApiKeyByUserIDAndDeviceIDAndID(ctx, userID, deviceID, id)
+	if err != nil {
+		svc.log.Warn("device.svc.DeleteDeviceApiKeyByUserIDAndDeviceIDAndID() 오류",
+			zap.String("userId", userID),
+			zap.String("deviceId", deviceID),
+			zap.String("id", id),
+			zap.Error(err),
+		)
+		return errors.New("장치 API를 제거할 수 없습니다")
+	}
+
+	return nil
+}
+
+func (svc *deviceService) GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, userID string, deviceID string) ([]*domain.RawApiKey, error) {
+
+	data, err := svc.device.GetDeviceApiKeyListByUserIDAndDeviceID(ctx, userID, deviceID)
+	if err != nil {
+		svc.log.Info("device.svc.GetDeviceApiKeyListByUserIDAndDeviceID()", zap.Error(err))
+		return nil, errors.New("API 키 리스트를 조회할 수 없습니다")
+	}
+
+	return data, nil
+}
+
+func (svc *deviceService) GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error) {
+	deviceID, err := svc.device.GetDeviceApiKeyByApiKey(ctx, apiKey)
+	if err != nil {
+		svc.log.Info("device.svc.GetDeviceApiKeyByID() 오류 - API키가 일치하지 않습니다",
+			zap.String("apiKey", apiKey),
+			zap.Error(err))
+		return "", errors.New("잘못된 접근입니다")
+	}
+
+	return deviceID, nil
+}
+
+func (svc *deviceService) CreateDeviceApiKey(ctx context.Context, in *domain.RawApiKey) (*domain.ApiKey, error) {
+
+	data, err := svc.device.CreateDeviceApiKey(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+
+	apiKey := &domain.ApiKey{
+		ID:       data.ID,
+		Key:      data.APIKey,
+		DeviceID: data.DeviceID,
+		Title:    data.Title,
+		Desc:     data.Desc.String,
+	}
+
+	return apiKey, nil
+}
+
+func (svc *deviceService) CreateDeviceRequestSchema(ctx context.Context, in *domain.RawDeviceRequestSchema) error {
+	if err := svc.device.WithTransaction(ctx, func(tx pgx.Tx) error {
+		if err := svc.device.CreateDeviceRequestSchemaListTx(ctx, tx, in.DeviceID, []*domain.RawDeviceRequestSchema{in}); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		svc.log.Info("device.svc.CreateDeviceRequestSchema() 오류", zap.Error(err))
+		return errors.New("장치 요청 스키마 생성에 실패했습니다")
+	}
+
+	return nil
+}
+
+func (svc *deviceService) DeleteDeviceInfoByID(ctx context.Context, deviceID string, userID string) error {
+	if err := svc.device.DeleteDeviceInfoByID(ctx, deviceID, userID); err != nil {
+		svc.log.Info("device.svc.DeleteDeviceInfoByID() 오류", zap.Error(err))
+		return errors.New("장비 데이터 제거에 실패했습니다")
+	}
+	return nil
+}
+
+// 장비 접근 권한 체크
+func (svc *deviceService) checkDeviceAccessState(ctx context.Context, deviceID, userID string) (*domain.DeviceInfo, error) {
+	deviceInfo, err := svc.device.GetDeviceInfoByID(ctx, deviceID)
+	if err != nil {
+		svc.log.Info("device.svc.checkDeviceAccessState() 오류 - 존재 하지 않는 장비 ID 입니다",
+			zap.String("id", deviceID),
+			zap.Error(err),
+		)
+		return nil, errors.New("존재하지 않는 장비 ID 입니다")
+	}
+	if deviceInfo.UserID != userID {
+		err := errors.New("장비 데이터 접근 권한이 없습니다")
+		svc.log.Info("device.svc.checkDeviceAccessState() 오류",
+			zap.String("id", deviceID),
+			zap.String("userID", userID),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	return deviceInfo, nil
+}
+
+func (svc *deviceService) UpdateDeviceRequestSchemaByID(ctx context.Context, in *domain.RawDeviceRequestSchema, userID string) error {
+	// 장비 접근 권한 체크
+	_, err := svc.checkDeviceAccessState(ctx, in.DeviceID, userID)
+	if err != nil {
+		svc.log.Info("device.svc.UpdateDeviceRequestSchemaByID() 오류 - 장비 접근 권한이 없습니다.")
+		return err
+	}
+
+	if err := svc.device.UpdateDeviceRequestSchema(ctx, in); err != nil {
+		svc.log.Info("device.svc.UpdateDeviceRequestSchemaByID() 오류 - 장비 요청 스키마 업데이트중 오류가 발생했습니다.",
+			zap.Any("data", in),
+			zap.Error(err),
+		)
+		return errors.New("장비 요청 스키마 업데이트중 오류가 발생했습니다")
+	}
+
+	return nil
+}
+
+func (svc *deviceService) GetDeviceRequestSchemaListByID(ctx context.Context, deviceID string) ([]*domain.DeviceRequestSchema, error) {
+	// --- 데이터 조회 ---
+	list, err := svc.device.GetDeviceRequestSchemaListByDeviceID(ctx, deviceID)
+	if err != nil {
+		svc.log.Info("device.svc.UpdateDeviceInfo() 오류",
+			zap.String("id", deviceID),
+			zap.Error(err),
+		)
+		return nil, errors.New("장비 요청 스키마 데이터를 불러올 수 없습니다")
+	}
+
+	return list, nil
+}
+
+func (svc *deviceService) UpdateDeviceInfo(ctx context.Context, in *domain.RawDeviceInfo) error {
+
+	if err := svc.device.UpdateDeviceInfo(ctx, in); err != nil {
+		svc.log.Info("device.svc.UpdateDeviceInfo() 오류",
+			zap.Any("data", in),
+			zap.Error(err),
+		)
+		return errors.New("장비 정보를 업데이트 하는 도중 오류가 발생했습니다")
+	}
+
+	return nil
 }
 
 func (svc *deviceService) GetDeviceInfoByID(ctx context.Context, id string, userID string) (*domain.DeviceInfo, error) {
 	data, err := svc.device.GetDeviceInfoByID(ctx, id)
 	if err != nil {
-		return nil, err
+		svc.log.Info("device.svc.GetDeviceInfoByID() 오류", zap.Error(err))
+		return nil, errors.New("장치 ID가 존재하지 않습니다")
 	}
 	if data.UserID != userID {
 		err := errors.New("접근 권한이 없습니다")
@@ -55,7 +213,7 @@ func (svc *deviceService) CreateDevice(ctx context.Context, deviceInfoData *doma
 
 		// 스키마 데이터가 존재하는 경우
 		// DB에 스키마 삽입
-		if err := svc.device.CreateDeviceReqeustSchemaListTx(ctx, tx, deviceID, deviceSchemaDataList); err != nil {
+		if err := svc.device.CreateDeviceRequestSchemaListTx(ctx, tx, deviceID, deviceSchemaDataList); err != nil {
 			svc.log.Info("device.svc.CreateDeviceInfo() 오류 - 스키마를 생성할 수 없습니다.", zap.Error(err))
 			return err
 		}
