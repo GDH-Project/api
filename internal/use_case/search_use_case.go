@@ -14,6 +14,10 @@ type searchUseCase struct {
 	deviceService domain.DeviceService
 }
 
+func (uc *searchUseCase) GetRankingDeviceInfoList(ctx context.Context, filter domain.DeviceRanking, limit int) ([]*domain.DeviceInfo, error) {
+	return uc.searchService.GetRankingDeviceInfoList(ctx, filter, limit)
+}
+
 func (uc *searchUseCase) GetDeviceInfoListByParamAndPageInfo(ctx context.Context, in *domain.DeviceInfo, p *domain.Page) ([]*domain.DeviceInfo, *domain.Page, error) {
 	infoList, page, err := uc.deviceService.GetDeviceInfoListByParamAndPage(ctx, in, p)
 	if err != nil {

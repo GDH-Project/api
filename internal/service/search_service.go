@@ -13,6 +13,16 @@ type searchService struct {
 	log    *zap.Logger
 }
 
+func (svc *searchService) GetRankingDeviceInfoList(ctx context.Context, filter domain.DeviceRanking, limit int) ([]*domain.DeviceInfo, error) {
+	data, err := svc.device.GetRankingDeviceInfoList(ctx, filter, limit)
+	if err != nil {
+		svc.log.Error("search.svc.GetRankingDeviceInfoList", zap.Error(err))
+		return nil, errors.New("랭킬 정보 로드중 오류가 발생했습니다")
+	}
+
+	return data, nil
+}
+
 func (svc *searchService) GetDeviceInfoByDeviceID(ctx context.Context, deviceID string) (*domain.DeviceInfo, error) {
 	data, err := svc.device.GetDeviceInfoByID(ctx, deviceID)
 	if err != nil {

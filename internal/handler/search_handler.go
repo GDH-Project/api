@@ -32,6 +32,12 @@ type searchDeviceInfoListResponse struct {
 	}
 }
 
+type searchRankingResponse struct {
+	Body struct {
+		Data []*searchDeviceInfo `json:"data" doc:"장비 정보 JSON 리스트 입니다."`
+	}
+}
+
 func RegisterSearchHandler(api huma.API, log *zap.Logger, searchUseCase domain.SearchUseCase) {
 	v1 := huma.NewGroup(api, "/api/v1")
 
@@ -142,6 +148,49 @@ func RegisterSearchHandler(api huma.API, log *zap.Logger, searchUseCase domain.S
 			pageInfo.HasNextPage = true
 		}
 		resp.Body.PageInfo = *pageInfo
+
+		return &resp, nil
+	})
+
+	// 장비 랭킹 검색
+	huma.Register(v1, huma.Operation{
+		OperationID:   "v1SearchGetDeviceInfoListRankingByFilter",
+		Method:        http.MethodGet,
+		Path:          "/search/rank",
+		Summary:       "장비 정보 랭킹 리스트 By Filter",
+		Description:   "장비 정보 랭킹 리스트 By Filter API 입니다.",
+		Tags:          []string{"Search"},
+		DefaultStatus: http.StatusOK,
+	}, func(ctx context.Context, i *struct {
+		Filter string `query:"filter" enum:"update,create" doc:"랭킹 정렬 정보 수정/신규 생성 설정 필터" example:"update"`
+		Size   int    `query:"size" doc:"데이터 갯수" default:"5"`
+	}) (*searchRankingResponse, error) {
+		var resp searchRankingResponse
+
+		var filter domain.DeviceRanking
+		switch i.Filter {
+		case "create":
+			filter = domain.DeviceRankingByLastCreated
+		case "update":
+			filter = domain.DeviceRankingByLastUpdated
+		default:
+			filter = domain.DeviceRankingByLastCreated
+		}
+
+		data, err := searchUseCase.GetRankingDeviceInfoList(ctx, filter, i.Size)
+		if err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
+		var tempList []*searchDeviceInfo
+		for _, item := range data {
+			var t searchDeviceInfo
+			t.DeviceInfo = *item
+
+			tempList = append(tempList, &t)
+		}
+
+		resp.Body.Data = tempList
 
 		return &resp, nil
 	})

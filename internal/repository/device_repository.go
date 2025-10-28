@@ -18,6 +18,76 @@ type deviceRepository struct {
 	db  *pgxpool.Pool
 }
 
+func (r *deviceRepository) GetRankingDeviceInfoList(ctx context.Context, filter domain.DeviceRanking, limit int) ([]*domain.DeviceInfo, error) {
+	var deviceInfoList []*domain.DeviceInfo
+	q := `
+			SELECT 
+			    info.user_id,
+			    info.id,
+			    info.title,
+			    info.device_name,
+			    crop.title,
+			    uc.interval,
+			    state.title,
+			    city.title,
+			    info.created_at,
+			    info.updated_at
+			FROM device.device_info info
+				JOIN device.crop crop ON info.crop_id = crop.id
+				JOIN device.update_cycle uc ON info.update_cycle_id = uc.id
+			    JOIN device.address_state state ON info.address_state_id = state.id
+				JOIN device.address_city city ON info.address_city_id = city.id
+			WHERE info.deleted_at IS NULL
+			
+			ORDER BY
+				CASE
+					WHEN $1 = 0 THEN INFO.created_at
+					WHEN $1 = 1 THEN INFO.updated_at
+					-- 다른 조건이 있다면 여기에 추가
+					ELSE INFO.created_at -- 기본 정렬 방식 (선택 사항)
+				END DESC
+			LIMIT $2;
+		`
+
+	rows, err := r.db.Query(ctx, q,
+		filter, limit,
+	)
+	if err != nil {
+		r.log.Info("device.r.GetRankingDeviceInfoList() 오류", zap.Error(err))
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var deviceInfo domain.DeviceInfo
+		if err := rows.Scan(
+			&deviceInfo.UserID,
+			&deviceInfo.ID,
+			&deviceInfo.Title,
+			&deviceInfo.Name,
+			&deviceInfo.Crop,
+			&deviceInfo.UpdateCycle,
+			&deviceInfo.Address.State,
+			&deviceInfo.Address.City,
+			&deviceInfo.CreatedAt,
+			&deviceInfo.UpdatedAt,
+		); err != nil {
+			r.log.Error("device.r.GetDeviceInfoListByParamAndPage() 오류", zap.Error(err))
+			return nil, err
+		}
+
+		deviceInfoList = append(deviceInfoList, &deviceInfo)
+	}
+
+	if err := rows.Err(); err != nil {
+		r.log.Error("device.r.GetDeviceInfoListByParamAndPage() 오류", zap.Error(err))
+		return nil, err
+	}
+
+	return deviceInfoList, nil
+}
+
 func (r *deviceRepository) GetDeviceDataListByDeviceID(ctx context.Context, deviceID string) ([]*domain.DeviceData, error) {
 	var dataList []*domain.DeviceData
 	q := `SELECT time, device_id, data FROM device.device_data WHERE device_id = $1 ORDER BY time DESC`
