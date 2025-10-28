@@ -223,5 +223,5 @@ func RegisterAuthHandler(api huma.API, log *zap.Logger, authUseCase domain.AuthU
 		return nil, nil
 	})
 
-	log.Info("user Handler 등록")
+	log.Info("User Handler 등록")
 }

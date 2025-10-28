@@ -102,6 +102,9 @@ func main() {
 		deviceService := service.NewDeviceService(log, deviceRepository)
 		deviceUseCase := usecase.NewDeviceUseCase(log, deviceService, metaService)
 
+		searchService := service.NewSearchService(log, deviceRepository)
+		searchUseCase := usecase.NewSearchUseCase(log, searchService, deviceService)
+
 		middleware := m.NewMiddleware(api, log, authUseCase)
 
 		// gRPC 미들웨어 적용
@@ -111,6 +114,7 @@ func main() {
 		handler.RegisterAuthHandler(api, log, authUseCase, userUseCase, middleware)
 		handler.RegisterMetaHandler(api, log, metaUseCase)
 		handler.RegisterDeviceHandler(api, log, deviceUseCase, middleware)
+		handler.RegisterSearchHandler(api, log, searchUseCase)
 
 		server := http.Server{
 			Addr:    ":8080",
