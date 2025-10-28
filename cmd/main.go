@@ -103,7 +103,7 @@ func main() {
 		deviceUseCase := usecase.NewDeviceUseCase(log, deviceService, metaService)
 
 		searchService := service.NewSearchService(log, deviceRepository)
-		searchUseCase := usecase.NewSearchUseCase(log, searchService)
+		searchUseCase := usecase.NewSearchUseCase(log, searchService, deviceService)
 
 		middleware := m.NewMiddleware(api, log, authUseCase)
 
