@@ -28,7 +28,7 @@ func (uc *deviceUseCase) CreateDeviceDataWithApiKey(ctx context.Context, apiKey 
 	}
 
 	// 장비 ID에 해당하는 스키마 추출
-	schemaList, err := uc.deviceSvc.GetDeviceReqeustSchemaListByID(ctx, deviceId)
+	schemaList, err := uc.deviceSvc.GetDeviceRequestSchemaListByID(ctx, deviceId)
 	if err != nil {
 		uc.log.Info("device.uc.CreateDeviceDataWithApiKey()오류 - 스키마 정보를 받아올 수 없습니다.", zap.Error(err))
 		return err
@@ -75,7 +75,7 @@ func (uc *deviceUseCase) DeleteDeviceApiKeyByUserIDAndDeviceID(ctx context.Conte
 	}
 	userID := validate.UserID()
 
-	// 장치와 유저 연결설 체크는 불필요
+	// 장치와 유저 연결성 체크는 불필요
 	return uc.deviceSvc.DeleteDeviceApiKeyByUserIDAndDeviceID(ctx, userID, deviceID, id)
 }
 
@@ -131,13 +131,13 @@ func (uc *deviceUseCase) CreateDeviceApiKey(ctx context.Context, in *domain.ApiK
 	_, err = uc.deviceSvc.GetDeviceInfoByID(ctx, in.DeviceID, validate.UserID())
 	if err != nil {
 		uc.log.Info("device.uc.GetDeviceInfoByID() 오류 - 장치 정보를 불러올 수 없습니다.", zap.Error(err))
-		return nil, errors.New("장치 정보를 불러울 수 없습니다")
+		return nil, errors.New("장치 정보를 불러올 수 없습니다")
 	}
 
 	// 32바이트 문자열 생성
 	b := make([]byte, 24) // 24 -> base64 인코딩시 32자리
 	if _, err := rand.Read(b); err != nil {
-		uc.log.Info("device.uc.GetDeviceInfoByID() 오류 - 32바아트 문자열 생성 살패", zap.Error(err))
+		uc.log.Info("device.uc.GetDeviceInfoByID() 오류 - 32바이트 문자열 생성 실패", zap.Error(err))
 		return nil, err
 	}
 	key := base64.URLEncoding.EncodeToString(b)
@@ -165,7 +165,7 @@ func (uc *deviceUseCase) CreateDeviceApiKey(ctx context.Context, in *domain.ApiK
 	return data, nil
 }
 
-func (uc *deviceUseCase) CreateDeviceReqeustSchema(ctx context.Context, deviceID string, in *domain.DeviceRequestSchema) error {
+func (uc *deviceUseCase) CreateDeviceRequestSchema(ctx context.Context, deviceID string, in *domain.DeviceRequestSchema) error {
 	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
 	if err != nil {
 		return err
@@ -173,14 +173,14 @@ func (uc *deviceUseCase) CreateDeviceReqeustSchema(ctx context.Context, deviceID
 
 	_, err = uc.deviceSvc.GetDeviceInfoByID(ctx, deviceID, validate.UserID())
 	if err != nil {
-		uc.log.Info("device.uc.CreateDeviceReqeustSchema() 오류 - 장치 정보를 불러올 수 없습니다.", zap.Error(err))
-		return errors.New("장치 정보를 불러울 수 없습니다")
+		uc.log.Info("device.uc.CreateDeviceRequestSchema() 오류 - 장치 정보를 불러올 수 없습니다.", zap.Error(err))
+		return errors.New("장치 정보를 불러올 수 없습니다")
 	}
 
 	sensorInfo, err := uc.metaSvc.GetSensorByParam(ctx, &domain.Sensor{Title: in.Target})
 	if err != nil {
-		uc.log.Info("device.uc.CreateDeviceReqeustSchema() 오류 - 센서 정보를 불러올 수 없습니다.", zap.Error(err))
-		return errors.New("센서 정보를 불러울 수 없습니다")
+		uc.log.Info("device.uc.CreateDeviceRequestSchema() 오류 - 센서 정보를 불러올 수 없습니다.", zap.Error(err))
+		return errors.New("센서 정보를 불러올 수 없습니다")
 	}
 
 	param := &domain.RawDeviceRequestSchema{
@@ -189,8 +189,8 @@ func (uc *deviceUseCase) CreateDeviceReqeustSchema(ctx context.Context, deviceID
 		TargetSensorID: sensorInfo.ID,
 	}
 
-	if err := uc.deviceSvc.CreateDeviceReqeustSchema(ctx, param); err != nil {
-		uc.log.Info("device.uc.CreateDeviceReqeustSchema() 오류 - 장치 요청 데이터를 생성할 수 없습니다..", zap.Error(err))
+	if err := uc.deviceSvc.CreateDeviceRequestSchema(ctx, param); err != nil {
+		uc.log.Info("device.uc.CreateDeviceRequestSchema() 오류 - 장치 요청 데이터를 생성할 수 없습니다..", zap.Error(err))
 		return err
 	}
 
@@ -231,7 +231,7 @@ func (uc *deviceUseCase) DeleteDeviceInfoByID(ctx context.Context, deviceID stri
 	return nil
 }
 
-func (uc *deviceUseCase) UpdateDeviceReqeustSchemaByID(ctx context.Context, in *domain.DeviceRequestSchema, deviceID string) error {
+func (uc *deviceUseCase) UpdateDeviceRequestSchemaByID(ctx context.Context, in *domain.DeviceRequestSchema, deviceID string) error {
 	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
 	if err != nil {
 		return err
@@ -244,13 +244,13 @@ func (uc *deviceUseCase) UpdateDeviceReqeustSchemaByID(ctx context.Context, in *
 	}
 	sensorData, err := uc.metaSvc.GetSensorByParam(ctx, &domain.Sensor{Title: in.Target})
 	if err != nil {
-		uc.log.Info("device.uc.UpdateDeviceReqeustSchemaByID() 오류 - 센서 정보를 받아올 수 없습니다.", zap.Error(err))
+		uc.log.Info("device.uc.UpdateDeviceRequestSchemaByID() 오류 - 센서 정보를 받아올 수 없습니다.", zap.Error(err))
 		return errors.New("존재하지 않는 센서입니다")
 	}
 	param.TargetSensorID = sensorData.ID
 
-	if err := uc.deviceSvc.UpdateDeviceReqeustSchemaByID(ctx, param, validate.UserID()); err != nil {
-		uc.log.Info("device.uc.UpdateDeviceReqeustSchemaByID() 오류", zap.Error(err))
+	if err := uc.deviceSvc.UpdateDeviceRequestSchemaByID(ctx, param, validate.UserID()); err != nil {
+		uc.log.Info("device.uc.UpdateDeviceRequestSchemaByID() 오류", zap.Error(err))
 		return err
 	}
 
@@ -258,7 +258,7 @@ func (uc *deviceUseCase) UpdateDeviceReqeustSchemaByID(ctx context.Context, in *
 
 }
 
-func (uc *deviceUseCase) GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string) ([]*domain.DeviceRequestSchema, error) {
+func (uc *deviceUseCase) GetDeviceRequestSchemaListByID(ctx context.Context, deviceID string) ([]*domain.DeviceRequestSchema, error) {
 	validate, err := uc.validateUser(ctx, domain.UserRoleDevice)
 	if err != nil {
 		return nil, err
@@ -270,9 +270,9 @@ func (uc *deviceUseCase) GetDeviceReqeustSchemaListByID(ctx context.Context, dev
 		return nil, err
 	}
 
-	list, err := uc.deviceSvc.GetDeviceReqeustSchemaListByID(ctx, deviceInfo.ID)
+	list, err := uc.deviceSvc.GetDeviceRequestSchemaListByID(ctx, deviceInfo.ID)
 	if err != nil {
-		uc.log.Info("device.uc.GetDeviceReqeustSchemaListByID() 오류", zap.Error(err))
+		uc.log.Info("device.uc.GetDeviceRequestSchemaListByID() 오류", zap.Error(err))
 		return nil, errors.New("장비 스키마 정보를 불러올 수 없습니다")
 	}
 

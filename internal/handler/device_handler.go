@@ -267,7 +267,7 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		param.Key = i.Body.Key
 		param.Target = i.Body.Target
 
-		if err := deviceUseCase.CreateDeviceReqeustSchema(ctx, i.DeviceID, &param); err != nil {
+		if err := deviceUseCase.CreateDeviceRequestSchema(ctx, i.DeviceID, &param); err != nil {
 			return nil, huma.Error400BadRequest(err.Error())
 		}
 
@@ -291,7 +291,7 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 	}) (*deviceRequestSchemaListResponse, error) {
 		var resp deviceRequestSchemaListResponse
 
-		schemaList, err := deviceUseCase.GetDeviceReqeustSchemaListByID(ctx, i.DeviceID)
+		schemaList, err := deviceUseCase.GetDeviceRequestSchemaListByID(ctx, i.DeviceID)
 		if err != nil {
 			return nil, huma.Error400BadRequest(err.Error())
 		}
@@ -325,7 +325,7 @@ func RegisterDeviceHandler(api huma.API, log *zap.Logger, deviceUseCase domain.D
 		param.Key = i.Body.Key
 		param.Target = i.Body.Target
 
-		if err := deviceUseCase.UpdateDeviceReqeustSchemaByID(ctx, &param, i.DeviceID); err != nil {
+		if err := deviceUseCase.UpdateDeviceRequestSchemaByID(ctx, &param, i.DeviceID); err != nil {
 			return nil, huma.Error400BadRequest(err.Error())
 		}
 

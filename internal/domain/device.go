@@ -21,8 +21,8 @@ type DeviceRepository interface {
 	UpdateDeviceInfo(ctx context.Context, in *RawDeviceInfo) error
 	// DeleteDeviceInfoByID 장비 제거
 	DeleteDeviceInfoByID(ctx context.Context, id string, userID string) error
-	// CreateDeviceReqeustSchemaListTx req_to_sensor 에 삽입되는 디바이스 응답(JSON) 키와 센서를 연결하는 부분
-	CreateDeviceReqeustSchemaListTx(ctx context.Context, tx pgx.Tx, deviceID string, schemas []*RawDeviceRequestSchema) error
+	// CreateDeviceRequestSchemaListTx req_to_sensor 에 삽입되는 디바이스 응답(JSON) 키와 센서를 연결하는 부분
+	CreateDeviceRequestSchemaListTx(ctx context.Context, tx pgx.Tx, deviceID string, schemas []*RawDeviceRequestSchema) error
 	GetDeviceRequestSchemaListByDeviceID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
 	GetDeviceRequestSchemaByID(ctx context.Context, id int) (*DeviceRequestSchema, error)
 	UpdateDeviceRequestSchema(ctx context.Context, in *RawDeviceRequestSchema) error
@@ -40,12 +40,12 @@ type DeviceService interface {
 	GetDeviceInfoListByParamAndPage(ctx context.Context, in *DeviceInfo, page *Page) ([]*DeviceInfo, *Page, error)
 	GetDeviceInfoByID(ctx context.Context, id string, userID string) (*DeviceInfo, error)
 	UpdateDeviceInfo(ctx context.Context, in *RawDeviceInfo) error
-	GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
-	UpdateDeviceReqeustSchemaByID(ctx context.Context, in *RawDeviceRequestSchema, userID string) error
+	GetDeviceRequestSchemaListByID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
+	UpdateDeviceRequestSchemaByID(ctx context.Context, in *RawDeviceRequestSchema, userID string) error
 	DeleteDeviceInfoByID(ctx context.Context, deviceID string, userID string) error
-	CreateDeviceReqeustSchema(ctx context.Context, in *RawDeviceRequestSchema) error
+	CreateDeviceRequestSchema(ctx context.Context, in *RawDeviceRequestSchema) error
 	CreateDeviceApiKey(ctx context.Context, in *RawApiKey) (*ApiKey, error)
-	// GetDeviceApiKeyByApiKey 반횐되는 값은 장치 ID 이다.
+	// GetDeviceApiKeyByApiKey 반환되는 값은 장치 ID 이다.
 	GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error)
 	GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, userID string, deviceID string) ([]*RawApiKey, error)
 	DeleteDeviceApiKeyByUserIDAndDeviceID(ctx context.Context, userID, deviceID, id string) error
@@ -58,12 +58,12 @@ type DeviceUseCase interface {
 	GetDeviceInfoByID(ctx context.Context, id string) (*DeviceInfo, error)
 	UpdateDeviceInfo(ctx context.Context, in *DeviceInfo) error
 
-	GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
-	UpdateDeviceReqeustSchemaByID(ctx context.Context, in *DeviceRequestSchema, deviceID string) error
+	GetDeviceRequestSchemaListByID(ctx context.Context, deviceID string) ([]*DeviceRequestSchema, error)
+	UpdateDeviceRequestSchemaByID(ctx context.Context, in *DeviceRequestSchema, deviceID string) error
 	DeleteDeviceInfoByID(ctx context.Context, deviceID string) error
-	CreateDeviceReqeustSchema(ctx context.Context, deviceID string, in *DeviceRequestSchema) error
+	CreateDeviceRequestSchema(ctx context.Context, deviceID string, in *DeviceRequestSchema) error
 	CreateDeviceApiKey(ctx context.Context, in *ApiKey) (*ApiKey, error)
-	// GetDeviceApiKeyByApiKey 반횐되는 값은 장치 ID 이다.
+	// GetDeviceApiKeyByApiKey 반환되는 값은 장치 ID 이다.
 	GetDeviceApiKeyByApiKey(ctx context.Context, apiKey string) (string, error)
 	GetDeviceApiKeyListByUserIDAndDeviceID(ctx context.Context, deviceID string) ([]*ApiKey, error)
 	DeleteDeviceApiKeyByUserIDAndDeviceID(ctx context.Context, deviceID, id string) error
@@ -138,6 +138,6 @@ type ApiKey struct {
 	Key       string    `json:"-"`
 	DeviceID  string    `json:"device_id" doc:"장치 고유 ID 입니다."`
 	Title     string    `json:"title" maxLength:"50" doc:"API 키에 대한 이름 입니다." example:"경기도 안양시 토마토 농장 A-B1 섹터 센서"`
-	Desc      string    `json:"desc,omitempty" doc:"API 키에 대한 셜명입니다." example:"2층 토마토 센서"`
+	Desc      string    `json:"desc,omitempty" doc:"API 키에 대한 설명입니다." example:"2층 토마토 센서"`
 	CreatedAt time.Time `json:"created_at" doc:"API 키 생성 시간 입니다."`
 }

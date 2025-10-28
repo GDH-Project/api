@@ -82,14 +82,14 @@ func (svc *deviceService) CreateDeviceApiKey(ctx context.Context, in *domain.Raw
 	return apiKey, nil
 }
 
-func (svc *deviceService) CreateDeviceReqeustSchema(ctx context.Context, in *domain.RawDeviceRequestSchema) error {
+func (svc *deviceService) CreateDeviceRequestSchema(ctx context.Context, in *domain.RawDeviceRequestSchema) error {
 	if err := svc.device.WithTransaction(ctx, func(tx pgx.Tx) error {
-		if err := svc.device.CreateDeviceReqeustSchemaListTx(ctx, tx, in.DeviceID, []*domain.RawDeviceRequestSchema{in}); err != nil {
+		if err := svc.device.CreateDeviceRequestSchemaListTx(ctx, tx, in.DeviceID, []*domain.RawDeviceRequestSchema{in}); err != nil {
 			return err
 		}
 		return nil
 	}); err != nil {
-		svc.log.Info("device.svc.CreateDeviceReqeustSchema() 오류", zap.Error(err))
+		svc.log.Info("device.svc.CreateDeviceRequestSchema() 오류", zap.Error(err))
 		return errors.New("장치 요청 스키마 생성에 실패했습니다")
 	}
 
@@ -126,16 +126,16 @@ func (svc *deviceService) checkDeviceAccessState(ctx context.Context, deviceID, 
 	return deviceInfo, nil
 }
 
-func (svc *deviceService) UpdateDeviceReqeustSchemaByID(ctx context.Context, in *domain.RawDeviceRequestSchema, userID string) error {
+func (svc *deviceService) UpdateDeviceRequestSchemaByID(ctx context.Context, in *domain.RawDeviceRequestSchema, userID string) error {
 	// 장비 접근 권한 체크
 	_, err := svc.checkDeviceAccessState(ctx, in.DeviceID, userID)
 	if err != nil {
-		svc.log.Info("device.svc.UpdateDeviceReqeustSchemaByID() 오류 - 장비 접근 권한이 없습니다.")
+		svc.log.Info("device.svc.UpdateDeviceRequestSchemaByID() 오류 - 장비 접근 권한이 없습니다.")
 		return err
 	}
 
 	if err := svc.device.UpdateDeviceRequestSchema(ctx, in); err != nil {
-		svc.log.Info("device.svc.UpdateDeviceReqeustSchemaByID() 오류 - 장비 요청 스키마 업데이트중 오류가 발생했습니다.",
+		svc.log.Info("device.svc.UpdateDeviceRequestSchemaByID() 오류 - 장비 요청 스키마 업데이트중 오류가 발생했습니다.",
 			zap.Any("data", in),
 			zap.Error(err),
 		)
@@ -145,7 +145,7 @@ func (svc *deviceService) UpdateDeviceReqeustSchemaByID(ctx context.Context, in 
 	return nil
 }
 
-func (svc *deviceService) GetDeviceReqeustSchemaListByID(ctx context.Context, deviceID string) ([]*domain.DeviceRequestSchema, error) {
+func (svc *deviceService) GetDeviceRequestSchemaListByID(ctx context.Context, deviceID string) ([]*domain.DeviceRequestSchema, error) {
 	// --- 데이터 조회 ---
 	list, err := svc.device.GetDeviceRequestSchemaListByDeviceID(ctx, deviceID)
 	if err != nil {
@@ -213,7 +213,7 @@ func (svc *deviceService) CreateDevice(ctx context.Context, deviceInfoData *doma
 
 		// 스키마 데이터가 존재하는 경우
 		// DB에 스키마 삽입
-		if err := svc.device.CreateDeviceReqeustSchemaListTx(ctx, tx, deviceID, deviceSchemaDataList); err != nil {
+		if err := svc.device.CreateDeviceRequestSchemaListTx(ctx, tx, deviceID, deviceSchemaDataList); err != nil {
 			svc.log.Info("device.svc.CreateDeviceInfo() 오류 - 스키마를 생성할 수 없습니다.", zap.Error(err))
 			return err
 		}

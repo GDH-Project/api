@@ -231,11 +231,11 @@ func (r *deviceRepository) GetDeviceRequestSchemaListByDeviceID(ctx context.Cont
 	return deviceSchemaList, nil
 }
 
-func (r *deviceRepository) CreateDeviceReqeustSchemaListTx(ctx context.Context, tx pgx.Tx, deviceID string, schemas []*domain.RawDeviceRequestSchema) error {
+func (r *deviceRepository) CreateDeviceRequestSchemaListTx(ctx context.Context, tx pgx.Tx, deviceID string, schemas []*domain.RawDeviceRequestSchema) error {
 	// deviceID 가 없거나 스키마가 없는 경우 필터링
 	if deviceID == "" || len(schemas) == 0 {
 		err := errors.New("파라미터를 확인해 주세요")
-		r.log.Info("device.r.CreateDeviceReqeustSchemaListTx() 오류",
+		r.log.Info("device.r.CreateDeviceRequestSchemaListTx() 오류",
 			zap.String("deviceID", deviceID),
 			zap.Any("schemas", schemas),
 			zap.Error(err),
@@ -270,7 +270,7 @@ func (r *deviceRepository) CreateDeviceReqeustSchemaListTx(ctx context.Context, 
 
 	_, err := tx.Exec(ctx, q, args...)
 	if err != nil {
-		r.log.Error("device.r.CreateDeviceReqeustSchemaListTx() 오류",
+		r.log.Error("device.r.CreateDeviceRequestSchemaListTx() 오류",
 			zap.String("deviceID", deviceID),
 			zap.String("q", q),
 			zap.Any("args", args),
