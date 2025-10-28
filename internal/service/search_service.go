@@ -13,6 +13,16 @@ type searchService struct {
 	log    *zap.Logger
 }
 
+func (svc *searchService) GetDeviceInfoByDeviceID(ctx context.Context, deviceID string) (*domain.DeviceInfo, error) {
+	data, err := svc.device.GetDeviceInfoByID(ctx, deviceID)
+	if err != nil {
+		svc.log.Info("search.svc.GetDeviceInfoByDeviceID() 오류 - 장치 조회 실패", zap.Error(err))
+		return nil, errors.New("장치 ID를 확인해 주세요")
+	}
+
+	return data, nil
+}
+
 func (svc *searchService) GetDeviceDataListByDeviceID(ctx context.Context, deviceID string) ([]map[string]interface{}, error) {
 	dataList, err := svc.device.GetDeviceDataListByDeviceID(ctx, deviceID)
 	if err != nil {
